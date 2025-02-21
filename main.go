@@ -1,11 +1,5 @@
 package main
 
-import (
-	"fmt"
-
-	"github.com/yandzee/config/pkg/transform"
-)
-
 //	type Transformy] struct {
 //		Datum T
 //	}
@@ -26,32 +20,35 @@ import (
 //
 // }
 
-type StringSplitter struct {
-	Separators []string
-}
-
-func Splitter(seps ...string) *StringSplitter {
-	return &StringSplitter{
-		Separators: seps,
-	}
-}
-
-func (s *StringSplitter) Transform(v string) ([]string, error) {
-	return []string{}, nil
-}
+// type StringSplitter struct {
+// 	Separators []string
+// }
+//
+// func Splitter(seps ...string) *StringSplitter {
+// 	return &StringSplitter{
+// 		Separators: seps,
+// 	}
+// }
+//
+// func (s *StringSplitter) Transform(v string) ([]string, error) {
+// 	return []string{}, nil
+// }
+//
+// func main() {
+// 	str := "ydz;was,here:and there"
+//
+// 	pl := transform.Pipe2(
+// 		Unhex(),
+// 		Splitter(","),
+// 	)
+//
+// 	transformed, err := pl.Transform(str)
+// 	if err != nil {
+// 		panic(err.Error())
+// 	}
+//
+// 	fmt.Printf("transformed: %v\n", transformed)
+// }
 
 func main() {
-	str := "ydz;was,here:and there"
-
-	pl := transform.Pipe2(
-		Unhex(),
-		Splitter(","),
-	)
-
-	transformed, err := pl.Transform(str)
-	if err != nil {
-		panic(err.Error())
-	}
-
-	fmt.Printf("transformed: %v\n", transformed)
 }
