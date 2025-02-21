@@ -10,80 +10,82 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/yandzee/config/pkg/common"
 )
 
 type StringParser struct{}
 
-func (sp *StringParser) Int(v string, opts FnOptions) (int, error) {
+func (sp *StringParser) Int(v string, opts common.KVOptions) (int, error) {
 	parsed, err := strconv.ParseInt(v, 10, 0)
 	return int(parsed), err
 }
 
-func (sp *StringParser) Int8(v string, opts FnOptions) (int8, error) {
+func (sp *StringParser) Int8(v string, opts common.KVOptions) (int8, error) {
 	parsed, err := strconv.ParseInt(v, 10, 8)
 	return int8(parsed), err
 }
 
-func (sp *StringParser) Int16(v string, opts FnOptions) (int16, error) {
+func (sp *StringParser) Int16(v string, opts common.KVOptions) (int16, error) {
 	parsed, err := strconv.ParseInt(v, 10, 16)
 	return int16(parsed), err
 }
 
-func (sp *StringParser) Int32(v string, opts FnOptions) (int32, error) {
+func (sp *StringParser) Int32(v string, opts common.KVOptions) (int32, error) {
 	parsed, err := strconv.ParseInt(v, 10, 32)
 	return int32(parsed), err
 }
 
-func (sp *StringParser) Int64(v string, opts FnOptions) (int64, error) {
+func (sp *StringParser) Int64(v string, opts common.KVOptions) (int64, error) {
 	return strconv.ParseInt(v, 10, 64)
 }
 
-func (sp *StringParser) Uint(v string, opts FnOptions) (uint, error) {
+func (sp *StringParser) Uint(v string, opts common.KVOptions) (uint, error) {
 	parsed, err := strconv.ParseUint(v, 10, 0)
 	return uint(parsed), err
 }
 
-func (sp *StringParser) Uint8(v string, opts FnOptions) (uint8, error) {
+func (sp *StringParser) Uint8(v string, opts common.KVOptions) (uint8, error) {
 	parsed, err := strconv.ParseUint(v, 10, 8)
 	return uint8(parsed), err
 }
 
-func (sp *StringParser) Uint16(v string, opts FnOptions) (uint16, error) {
+func (sp *StringParser) Uint16(v string, opts common.KVOptions) (uint16, error) {
 	parsed, err := strconv.ParseUint(v, 10, 16)
 	return uint16(parsed), err
 }
 
-func (sp *StringParser) Uint32(v string, opts FnOptions) (uint32, error) {
+func (sp *StringParser) Uint32(v string, opts common.KVOptions) (uint32, error) {
 	parsed, err := strconv.ParseUint(v, 10, 32)
 	return uint32(parsed), err
 }
 
-func (sp *StringParser) Uint64(v string, opts FnOptions) (uint64, error) {
+func (sp *StringParser) Uint64(v string, opts common.KVOptions) (uint64, error) {
 	return strconv.ParseUint(v, 10, 64)
 }
 
-func (sp *StringParser) Float32(v string, opts FnOptions) (float32, error) {
+func (sp *StringParser) Float32(v string, opts common.KVOptions) (float32, error) {
 	parsed, err := strconv.ParseFloat(v, 32)
 	return float32(parsed), err
 }
 
-func (sp *StringParser) Float64(v string, opts FnOptions) (float64, error) {
+func (sp *StringParser) Float64(v string, opts common.KVOptions) (float64, error) {
 	return strconv.ParseFloat(v, 64)
 }
 
-func (sp *StringParser) Bool(v string, opts FnOptions) (bool, error) {
+func (sp *StringParser) Bool(v string, opts common.KVOptions) (bool, error) {
 	return strconv.ParseBool(v)
 }
 
-func (sp *StringParser) Bytes(v string, opts FnOptions) ([]byte, error) {
+func (sp *StringParser) Bytes(v string, opts common.KVOptions) ([]byte, error) {
 	return []byte(v), nil
 }
 
-// func (sp *StringParser) String(v string, opts FnOptions) (string, error) {
+// func (sp *StringParser) String(v string, opts common.KVOptions) (string, error) {
 // 	return v, nil
 // }
 
-func (sp *StringParser) Strings(v string, opts FnOptions) ([]string, error) {
+func (sp *StringParser) Strings(v string, opts common.KVOptions) ([]string, error) {
 	res := []string{v}
 	separators := opts.GetStringSliceOr("seps", []string{","})
 	trim := opts.GetBoolOr("trim", false)
@@ -128,11 +130,11 @@ func (sp *StringParser) Strings(v string, opts FnOptions) ([]string, error) {
 	return res, nil
 }
 
-func (sp *StringParser) Duration(v string, opts FnOptions) (time.Duration, error) {
+func (sp *StringParser) Duration(v string, opts common.KVOptions) (time.Duration, error) {
 	return time.ParseDuration(v)
 }
 
-func (sp *StringParser) ECPrivateKey(v string, opts FnOptions) (*ecdsa.PrivateKey, error) {
+func (sp *StringParser) ECPrivateKey(v string, opts common.KVOptions) (*ecdsa.PrivateKey, error) {
 	block, _ := pem.Decode([]byte(v))
 	if block == nil {
 		return nil, fmt.Errorf("PEM block is not found")
@@ -149,7 +151,7 @@ func (sp *StringParser) ECPrivateKey(v string, opts FnOptions) (*ecdsa.PrivateKe
 	return pk, nil
 }
 
-func (sp *StringParser) SlogLevel(v string, opts FnOptions) (slog.Level, error) {
+func (sp *StringParser) SlogLevel(v string, opts common.KVOptions) (slog.Level, error) {
 	lvl := slog.LevelDebug
 	err := lvl.UnmarshalText([]byte(v))
 
