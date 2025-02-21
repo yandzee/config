@@ -3,6 +3,7 @@ package configurator
 import (
 	"github.com/yandzee/config/pkg/common"
 	"github.com/yandzee/config/pkg/source"
+	"github.com/yandzee/config/pkg/str"
 )
 
 // "chelnok-backend/pkg/config/options"
@@ -13,8 +14,8 @@ type Getter struct {
 	Source       source.StringSource
 }
 
-func (g *Getter) Bool(opts ...any) bool {
-	return false
+func (g *Getter) Bool(opts ...str.Transformer) bool {
+	return NewUnwrapper(str.Parser.Bool).Unwrap(g)
 	// return p(parse.Bool).Options(opts).Unwrap(g)
 }
 

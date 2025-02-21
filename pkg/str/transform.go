@@ -1,16 +1,16 @@
 package str
 
-type Transformer[F, T any] interface {
+type CommonTransformer[F, T any] interface {
 	Transform(F) (T, error)
 }
 
-type StringMapper = Transformer[string, string]
-type StringSplitter = Transformer[string, []string]
-type StringsJoiner = Transformer[[]string, string]
-type StringsReducer = Transformer[[]string, []string]
+type StringMapper = CommonTransformer[string, string]
+type StringSplitter = CommonTransformer[string, []string]
+type StringsJoiner = CommonTransformer[[]string, string]
+type StringsReducer = CommonTransformer[[]string, []string]
 
-type StringTransformer interface {
-	Map(StringMapper) StringTransformer
+type Transformer interface {
+	Map(StringMapper) Transformer
 	Split(StringSplitter) StringsTransformer
 	Terminate() StringTerminator
 }
@@ -36,30 +36,9 @@ type StringTerminator interface {
 	String() (string, error)
 }
 
-// type StringTerminator2 interface {
-// 	Int() Transformer[string, int]
-// 	Int8() Transformer[string, int8]
-// 	Int16() Transformer[string, int16]
-// 	Int32() Transformer[string, int32]
-// 	Int64() Transformer[string, int64]
-//
-// 	Uint() Transformer[string, uint]
-// 	Uint8() Transformer[string, uint8]
-// 	Uint16() Transformer[string, uint16]
-// 	Uint32() Transformer[string, uint32]
-// 	Uint64() Transformer[string, uint64]
-//
-// 	Float32() Transformer[string, float32]
-// 	Float64() Transformer[string, float64]
-//
-// 	Bool() Transformer[string, bool]
-// 	Bytes() Transformer[string, []byte]
-// 	String() Transformer[string, string]
-// }
-
 type StringsTransformer interface {
 	Map(StringMapper) StringsTransformer
-	Join(StringsJoiner) StringTransformer
+	Join(StringsJoiner) Transformer
 	Reduce(StringsReducer) StringsTransformer
 	Filter(StringsReducer) StringsTransformer
 	Terminate() StringTerminators
@@ -75,7 +54,7 @@ type StringTerminators []StringTerminator
 // 	return
 // }
 
-func NewTransformer() StringTransformer {
+func NewTransformer() Transformer {
 	return nil
 }
 
@@ -97,3 +76,24 @@ func NewTransformer() StringTransformer {
 // str.Transform().
 // 	Map(Unbase64).
 // 	Map(Unhex)
+
+// type StringTerminator2 interface {
+// 	Int() Transformer[string, int]
+// 	Int8() Transformer[string, int8]
+// 	Int16() Transformer[string, int16]
+// 	Int32() Transformer[string, int32]
+// 	Int64() Transformer[string, int64]
+//
+// 	Uint() Transformer[string, uint]
+// 	Uint8() Transformer[string, uint8]
+// 	Uint16() Transformer[string, uint16]
+// 	Uint32() Transformer[string, uint32]
+// 	Uint64() Transformer[string, uint64]
+//
+// 	Float32() Transformer[string, float32]
+// 	Float64() Transformer[string, float64]
+//
+// 	Bool() Transformer[string, bool]
+// 	Bytes() Transformer[string, []byte]
+// 	String() Transformer[string, string]
+// }
