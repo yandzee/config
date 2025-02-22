@@ -8,6 +8,7 @@ const (
 	DescFlagRequired DescriptorFlag = 1 << iota
 	DescFlagPresented
 	DescFlagDefaulted
+	// DescFlagUndefined
 	DescFlagParseError
 	DescFlagCustomError
 	DescFlagLookupError
@@ -24,6 +25,10 @@ func (df DescriptorFlag) IsPresented() bool {
 func (df DescriptorFlag) IsDefaulted() bool {
 	return df&DescFlagDefaulted != 0
 }
+
+// func (df DescriptorFlag) IsUndefined() bool {
+// 	return df&DescFlagUndefined != 0
+// }
 
 func (df DescriptorFlag) IsParseError() bool {
 	return df&DescFlagParseError != 0

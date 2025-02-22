@@ -1,6 +1,8 @@
 package transform
 
 import (
+	"fmt"
+
 	"github.com/yandzee/config/pkg/common"
 	"github.com/yandzee/config/pkg/str/parse"
 )
@@ -42,11 +44,14 @@ func Parse[T any](fn parse.Fn[T]) Transformer {
 func MapFromTo[F, T any](fn MapFromToFn[F, T]) Transformer {
 	return StateTransform(func(s *State, opts common.KVOptions) error {
 		val, ok := s.Value.(F)
+		fmt.Printf("StateTransform: initial cast: %v %v\n", val, ok)
+
 		if !ok {
 			return ErrCast
 		}
 
 		newVal, err := fn(val, opts)
+		fmt.Printf("StateTransform: fn result: %v %v\n", newVal, err)
 		if err != nil {
 			return err
 		}
