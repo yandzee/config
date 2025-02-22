@@ -3,6 +3,8 @@ package parse
 import (
 	"reflect"
 	"testing"
+
+	"github.com/yandzee/config/pkg/common"
 )
 
 type SplitTest struct {
@@ -15,7 +17,7 @@ func runSplitTests(t *testing.T, td []SplitTest) {
 	p := &StringParser{}
 
 	for i, test := range td {
-		opts := FnOptions{}
+		opts := common.KVOptions{}
 		opts.Set("seps", test.Seps)
 
 		result, err := p.Strings(test.Str, opts)
