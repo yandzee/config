@@ -20,13 +20,6 @@ func (c *Configurator) Env(varName string) *Getter {
 	})
 }
 
-func (c *Configurator) Str(str string, ok ...bool) *Getter {
-	return c.Source(&source.StrSource{
-		Str:       str,
-		Presented: len(ok) == 0 || ok[0],
-	})
-}
-
 func (c *Configurator) Source(src source.StringSource) *Getter {
 	return &Getter{
 		Source:       src,

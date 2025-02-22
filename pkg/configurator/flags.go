@@ -7,8 +7,8 @@ type DescriptorFlag uint8
 const (
 	DescFlagRequired DescriptorFlag = 1 << iota
 	DescFlagPresented
+	DescFlagNotPresented
 	DescFlagDefaulted
-	// DescFlagUndefined
 	DescFlagParseError
 	DescFlagCustomError
 	DescFlagLookupError
@@ -26,9 +26,9 @@ func (df DescriptorFlag) IsDefaulted() bool {
 	return df&DescFlagDefaulted != 0
 }
 
-// func (df DescriptorFlag) IsUndefined() bool {
-// 	return df&DescFlagUndefined != 0
-// }
+func (df DescriptorFlag) IsNotPresented() bool {
+	return df&DescFlagNotPresented != 0
+}
 
 func (df DescriptorFlag) IsParseError() bool {
 	return df&DescFlagParseError != 0
@@ -63,6 +63,7 @@ func (df DescriptorFlag) LogAttrs() []any {
 	}{
 		{"is-required", df.IsRequired()},
 		{"is-presented", df.IsPresented()},
+		{"is-not-presented", df.IsNotPresented()},
 		{"is-defaulted", df.IsDefaulted()},
 		{"is-parse-error", df.IsParseError()},
 		{"is-custom-error", df.IsCustomError()},

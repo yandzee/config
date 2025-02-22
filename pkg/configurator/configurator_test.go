@@ -1,49 +1,160 @@
 package configurator
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
+	"strconv"
 	"testing"
+)
 
-	"github.com/yandzee/config/pkg/common"
-	"github.com/yandzee/config/pkg/source"
+var (
+	ErrTest1 = errors.New("ErrTest1")
+	ErrTest2 = errors.New("ErrTest2")
 )
 
 type ConfiguratorTest[T any] struct {
-	Input              source.StringSource
-	Default            *T
-	DefaultFn          common.DefaultFn[T]
-	Expected           *T
-	ExpectedLogRecords int
+	Action          func(*Configurator)
+	ExpectedResults []ValueResult[any]
 }
 
 func TestConfigurator(t *testing.T) {
 	runConfiguratorTests(t, []ConfiguratorTest[string]{
 		{
-			Input: &source.StrSource{
-				Str:       "42",
-				Presented: true,
+			Action: func(cfg *Configurator) {
+				cfg.Str("4201", nil, true).Int()
 			},
-			Expected:           valptr("42"),
-			ExpectedLogRecords: 1,
+			ExpectedResults: []ValueResult[any]{
+				{
+					Source: NewStr("4201", nil, true),
+					Value:  4201,
+					Error:  nil,
+					Flags:  DescFlagRequired | DescFlagPresented,
+				},
+			},
 		},
 		{
-			Input: &source.StrSource{
-				Str:       "42",
-				Presented: false,
+			Action: func(cfg *Configurator) {
+				cfg.Str("4202", nil, false).Bool()
 			},
-			Expected:           nil,
-			ExpectedLogRecords: 1,
+			ExpectedResults: []ValueResult[any]{
+				{
+					Source: NewStr("4202", nil, false),
+					Value:  nil,
+					Error:  nil,
+					Flags:  DescFlagRequired | DescFlagNotPresented,
+				},
+			},
+		},
+		{
+			Action: func(cfg *Configurator) {
+				cfg.Str("4203", ErrTest1, true).Int()
+			},
+			ExpectedResults: []ValueResult[any]{
+				{
+					Source: NewStr("4203", ErrTest1, true),
+					Value:  nil,
+					Error:  ErrTest1,
+					Flags:  DescFlagRequired | DescFlagLookupError,
+				},
+			},
+		},
+		{
+			Action: func(cfg *Configurator) {
+				cfg.Str("4204", ErrTest2, false).Int()
+			},
+			ExpectedResults: []ValueResult[any]{
+				{
+					Source: NewStr("4204", ErrTest2, false),
+					Value:  nil,
+					Error:  nil,
+					Flags:  DescFlagRequired | DescFlagNotPresented,
+				},
+			},
+		},
+		{
+			Action: func(cfg *Configurator) {
+				cfg.Str("4205", nil, true).Bool()
+			},
+			ExpectedResults: []ValueResult[any]{
+				{
+					Source: NewStr("4205", nil, true),
+					Value:  nil,
+					Error:  strconv.ErrSyntax,
+					Flags:  DescFlagRequired | DescFlagParseError,
+				},
+			},
+		},
+		{
+			Action: func(cfg *Configurator) {
+				cfg.Str("T", nil, true).Bool()
+			},
+			ExpectedResults: []ValueResult[any]{
+				{
+					Source: NewStr("T", nil, true),
+					Value:  true,
+					Error:  nil,
+					Flags:  DescFlagRequired | DescFlagPresented,
+				},
+			},
+		},
+		{
+			Action: func(cfg *Configurator) {
+				cfg.Str("T", nil, true).BoolOr(true)
+			},
+			ExpectedResults: []ValueResult[any]{
+				{
+					Source: NewStr("T", nil, true),
+					Value:  true,
+					Error:  nil,
+					Flags:  DescFlagPresented,
+				},
+			},
+		},
+		{
+			Action: func(cfg *Configurator) {
+				cfg.Str("T", nil, false).BoolOr(true)
+			},
+			ExpectedResults: []ValueResult[any]{
+				{
+					Source: NewStr("T", nil, false),
+					Value:  true,
+					Error:  nil,
+					Flags:  DescFlagNotPresented | DescFlagDefaulted,
+				},
+			},
+		},
+		{
+			Action: func(cfg *Configurator) {
+				cfg.Str("4206", nil, true).BoolOrFn(func() (bool, error) {
+					return false, ErrTest1
+				})
+			},
+			ExpectedResults: []ValueResult[any]{
+				{
+					Source: NewStr("4206", nil, true),
+					Value:  nil,
+					Error:  ErrTest1,
+					Flags:  DescFlagPresented,
+				},
+			},
+		},
+		{
+			Action: func(cfg *Configurator) {
+				cfg.Str("4207", nil, false).BoolOrFn(func() (bool, error) {
+					return false, ErrTest1
+				})
+			},
+			ExpectedResults: []ValueResult[any]{
+				{
+					Source: NewStr("4207", nil, false),
+					Value:  nil,
+					Error:  ErrTest1,
+					Flags:  DescFlagPresented | DescFlagCustomError,
+				},
+			},
 		},
 	})
-}
-
-func valptr[T any](val T) *T {
-	return &val
-}
-
-func typename[T any]() string {
-	return reflect.ValueOf(*new(T)).Kind().String()
 }
 
 func runConfiguratorTests[T any](t *testing.T, tests []ConfiguratorTest[T]) {
@@ -105,4 +216,12 @@ func runConfiguratorTests[T any](t *testing.T, tests []ConfiguratorTest[T]) {
 			}
 		})
 	}
+}
+
+func valptr[T any](val T) *T {
+	return &val
+}
+
+func typename[T any]() string {
+	return reflect.ValueOf(*new(T)).Kind().String()
 }
