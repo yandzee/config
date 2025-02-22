@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"regexp"
 	"slices"
 	"strconv"
 	"strings"
@@ -95,6 +94,7 @@ func (sp *StringParser) Strings(v string, opts common.KVOptions) ([]string, erro
 	trim := opts.GetBoolOr("trim", false)
 
 	for _, sep := range separators {
+
 		for i := 0; i < len(res); i += 1 {
 			str := res[i]
 
@@ -116,32 +116,11 @@ func (sp *StringParser) Strings(v string, opts common.KVOptions) ([]string, erro
 			res[i] = parts[0]
 			if n > 1 {
 				res = slices.Insert(res, i+1, parts[1:]...)
-				i += n
+				i += n - 1
 			}
 		}
 	}
 
-	return res, nil
-}
-
-func (sp *StringParser) Strings2(v string, opts common.KVOptions) ([]string, error) {
-	separators := opts.GetStringSliceOr("seps", []string{","})
-
-	sb := strings.Builder{}
-	for i, sep := range separators {
-		if i > 0 {
-			fmt.Fprintf(&sb, ",(%s)", sep)
-		} else {
-			fmt.Fprintf(&sb, "(%s)", sep)
-		}
-	}
-
-	re, err := regexp.Compile(fmt.Sprintf("[%s]+", sb.String()))
-	if err != nil {
-		return nil, err
-	}
-
-	res := re.Split(v, -1)
 	return res, nil
 }
 

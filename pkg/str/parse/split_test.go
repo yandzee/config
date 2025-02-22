@@ -78,7 +78,7 @@ func TestStringSplits(t *testing.T) {
 		{
 			Str:      ":;,:;,,",
 			Seps:     []string{",", ":;"},
-			Expected: []string{"", "", "", "", ""},
+			Expected: []string{"", "", "", "", "", ""},
 		},
 	})
 }
@@ -90,15 +90,5 @@ func BenchmarkStringSplit(b *testing.B) {
 
 	for b.Loop() {
 		p.Strings("a:b;cde,f", opts)
-	}
-}
-
-func BenchmarkStringSplit2(b *testing.B) {
-	p := &StringParser{}
-	opts := common.KVOptions{}
-	opts.Set("seps", []string{",", ";", ":"})
-
-	for b.Loop() {
-		p.Strings2("a:b;cde,f", opts)
 	}
 }
