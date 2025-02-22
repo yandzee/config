@@ -3,7 +3,7 @@ package transform
 import "github.com/yandzee/config/pkg/common"
 
 type StateTransformer struct {
-	Fn StateTransformFn
+	Fn StateFn
 }
 
 func (st *StateTransformer) Chain(t Transformer) (Transformer, error) {
@@ -19,5 +19,5 @@ func (st *StateTransformer) Chain(t Transformer) (Transformer, error) {
 }
 
 func (st *StateTransformer) Transform(s *State, opts common.KVOptions) error {
-	return nil
+	return st.Fn(s, opts)
 }

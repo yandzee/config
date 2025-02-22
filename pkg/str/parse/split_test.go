@@ -65,5 +65,10 @@ func TestStringSplits(t *testing.T) {
 			Seps:     []string{",", ";", ":"},
 			Expected: []string{"a", "b", "cde", "f"},
 		},
+		{
+			Str:      "a:b;cde,f",
+			Seps:     []string{",", ";", ":"},
+			Expected: []string{"a", "b", "cde", "f"},
+		},
 	})
 }

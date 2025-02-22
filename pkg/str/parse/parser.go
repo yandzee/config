@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -15,6 +16,8 @@ import (
 )
 
 type StringParser struct{}
+
+type Fn[T any] func(string, common.KVOptions) (T, error)
 
 func (sp *StringParser) Int(v string, opts common.KVOptions) (int, error) {
 	parsed, err := strconv.ParseInt(v, 10, 0)
@@ -91,39 +94,29 @@ func (sp *StringParser) Strings(v string, opts common.KVOptions) ([]string, erro
 	trim := opts.GetBoolOr("trim", false)
 
 	for _, sep := range separators {
-		for i, str := range res {
+		for i := 0; i < len(res); i += 1 {
+			str := res[i]
+
 			parts := strings.Split(str, sep)
+			n := len(parts)
 
-			// Case when not splits occurred
-			if len(parts) == 1 {
-				if !trim {
-					res[i] = parts[0]
-				} else {
-					res[i] = strings.TrimSpace(parts[0])
-				}
-
+			if n == 1 {
 				continue
 			}
 
-			// Move elems beginning from `i` to the right, make place for `parts`
-			n := len(res) + len(parts) - 1
-			resReplaced := make([]string, n)
-			copy(resReplaced, res)
-
-			for range len(parts) {
-				resReplaced[n-1] = resReplaced[n-2]
-			}
-
-			// Actual insertion of `parts`
-			for j := range len(parts) {
-				if trim {
-					resReplaced[i+j] = strings.TrimSpace(parts[j])
-				} else {
-					resReplaced[i+j] = parts[j]
+			if trim {
+				for i := range n {
+					parts[i] = strings.TrimSpace(parts[i])
 				}
 			}
 
-			res = resReplaced
+			res = slices.Grow(res, n-1)
+
+			res[i] = parts[0]
+			if n > 1 {
+				res = slices.Insert(res, i+1, parts[1:]...)
+				i += n
+			}
 		}
 	}
 
