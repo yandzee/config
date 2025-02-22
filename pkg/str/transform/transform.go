@@ -10,7 +10,7 @@ var (
 	ErrTransform = errors.New("Failed to transform data")
 	ErrChain     = errors.New("Failed to chain transformers")
 
-	ErrCast      = errors.New("Failed to cast value type")
+	ErrCast = errors.New("Failed to cast value type")
 	// ErrNotString = errors.New("Failed to convert value to string")
 	// ErrNotSlice  = errors.New("Failed to convert value to string slice")
 )

@@ -13,9 +13,10 @@ type Configurator struct {
 
 func (c *Configurator) Env(varName string) *Getter {
 	return &Getter{
-		Configurator: c,
 		Source: &source.EnvVarSource{
 			VarName: varName,
 		},
+		IsValueLogged: c.IsValueLogged,
+		LogRecords:    &c.LogRecords,
 	}
 }

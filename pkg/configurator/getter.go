@@ -1,36 +1,43 @@
 package configurator
 
 import (
+	"log/slog"
+
 	"github.com/yandzee/config/pkg/common"
 	"github.com/yandzee/config/pkg/source"
 	"github.com/yandzee/config/pkg/str"
+	"github.com/yandzee/config/pkg/str/transform"
 )
 
 // "chelnok-backend/pkg/config/options"
 // "chelnok-backend/pkg/config/parse"
 
 type Getter struct {
-	Configurator *Configurator
-	Source       source.StringSource
+	// Configurator *Configurator
+	Source        source.StringSource
+	IsValueLogged bool
+	LogRecords    *[]slog.Record
 }
 
-func (g *Getter) Bool(opts ...str.Transformer) bool {
-	return NewUnwrapper(str.Parser.Bool).Unwrap(g)
-	// return p(parse.Bool).Options(opts).Unwrap(g)
+func (g *Getter) Bool(trs ...transform.Transformer) bool {
+	return NewSourceParser[bool](g.Source).
+		Transformers(trs...).
+		Transformers(transform.Parse(str.Parser.Bool)).
+		Unwrap(g)
 }
 
-func (g *Getter) BoolOr(def bool, opts ...any) bool {
-	return false
-	// return p(parse.Bool).Options(opts).Default(def).Unwrap(g)
+func (g *Getter) BoolOr(def bool, trs ...transform.Transformer) bool {
+	return NewSourceParser[bool](g.Source).
+		Default(def).
+		Transformers(trs...).
+		Transformers(transform.Parse(str.Parser.Bool)).
+		Unwrap(g)
 }
 
-func (g *Getter) BoolOrFn(fn common.DefaultFn[bool], opts ...any) bool {
-	return false
-	// return p(parse.Bool).Options(opts).DefaultFn(fn).Unwrap(g)
+func (g *Getter) BoolOrFn(fn common.DefaultFn[bool], trs ...transform.Transformer) bool {
+	return NewSourceParser[bool](g.Source).
+		DefaultFn(fn).
+		Transformers(trs...).
+		Transformers(transform.Parse(str.Parser.Bool)).
+		Unwrap(g)
 }
-
-// func p[T any](parseFn parse.Fn[T]) *Parser[T] {
-// 	return &Parser[T]{
-// 		parseFn: parseFn,
-// 	}
-// }
