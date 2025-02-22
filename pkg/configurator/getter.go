@@ -1,8 +1,6 @@
 package configurator
 
 import (
-	"log/slog"
-
 	"github.com/yandzee/config/pkg/common"
 	"github.com/yandzee/config/pkg/source"
 	"github.com/yandzee/config/pkg/str"
@@ -10,9 +8,8 @@ import (
 )
 
 type Getter struct {
-	Source        source.StringSource
-	IsValueLogged bool
-	LogRecords    *[]slog.Record
+	Source       source.StringSource
+	ValueResults *[]*ValueResult[any]
 }
 
 func (g *Getter) Int(trs ...transform.Transformer) int {

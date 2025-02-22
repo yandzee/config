@@ -6,9 +6,12 @@ import (
 	"github.com/yandzee/config/pkg/source"
 )
 
+type LogOption struct{}
+
+var LogWithValue = LogOption{}
+
 type Configurator struct {
-	LogRecords    []slog.Record
-	IsValueLogged bool
+	ValueResults []*ValueResult[any]
 }
 
 func (c *Configurator) Env(varName string) *Getter {
@@ -26,8 +29,22 @@ func (c *Configurator) Str(str string, ok ...bool) *Getter {
 
 func (c *Configurator) Source(src source.StringSource) *Getter {
 	return &Getter{
-		Source:        src,
-		IsValueLogged: c.IsValueLogged,
-		LogRecords:    &c.LogRecords,
+		Source:       src,
+		ValueResults: &c.ValueResults,
 	}
+}
+
+func (c *Configurator) LogRecords(opts ...LogOption) []slog.Record {
+	recs := make([]slog.Record, len(c.ValueResults))
+
+	withValue := false
+	for _, opt := range opts {
+		withValue = withValue || opt == LogWithValue
+	}
+
+	for i, vr := range c.ValueResults {
+		recs[i] = vr.LogRecord(withValue)
+	}
+
+	return recs
 }

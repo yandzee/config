@@ -58,3 +58,12 @@ func (er *ValueResult[T]) LevelAndMessage() (slog.Level, string) {
 		return slog.LevelInfo, "Value set"
 	}
 }
+
+func (er *ValueResult[T]) Any() *ValueResult[any] {
+	return &ValueResult[any]{
+		Source: er.Source,
+		Value:  any(er.Value),
+		Flags:  er.Flags,
+		Error:  er.Error,
+	}
+}

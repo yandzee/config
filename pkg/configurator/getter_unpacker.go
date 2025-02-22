@@ -38,8 +38,8 @@ func (sp *GetterUnpacker[T]) Unwrap(g *Getter) T {
 func (sp *GetterUnpacker[T]) Parse(g *Getter) *ValueResult[T] {
 	result := sp.ReadSource(g.Source)
 
-	if g.LogRecords != nil {
-		*g.LogRecords = append(*g.LogRecords, result.LogRecord(g.IsValueLogged))
+	if g.ValueResults != nil {
+		*g.ValueResults = append(*g.ValueResults, result.Any())
 	}
 
 	return result

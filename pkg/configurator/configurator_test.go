@@ -94,12 +94,13 @@ func runConfiguratorTests[T any](t *testing.T, tests []ConfiguratorTest[T]) {
 				t.Fatalf("Expected %v (%T), but output is nil\n", *ct.Expected, *ct.Expected)
 			}
 
-			if len(cfg.LogRecords) != ct.ExpectedLogRecords {
+			logRecords := cfg.LogRecords()
+			if len(logRecords) != ct.ExpectedLogRecords {
 				t.Fatalf(
 					"Num of log records is invalid, expected: %d, got: %d;\n%v\n",
 					ct.ExpectedLogRecords,
-					len(cfg.LogRecords),
-					cfg.LogRecords,
+					len(logRecords),
+					logRecords,
 				)
 			}
 		})
