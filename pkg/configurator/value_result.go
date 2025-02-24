@@ -43,7 +43,7 @@ func (er *ValueResult[T]) HasIssues() bool {
 }
 
 func (er *ValueResult[T]) IsRequiredAndNotSet() bool {
-	return er.Flags.IsRequired() && er.Flags.IsNotPresented()
+	return er.Flags.IsRequired() && !er.Flags.IsDefaulted() && !er.Flags.IsPresented()
 }
 
 func (er *ValueResult[T]) LevelAndMessage() (slog.Level, string) {

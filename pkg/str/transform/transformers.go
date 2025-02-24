@@ -44,14 +44,14 @@ func Parse[T any](fn parse.Fn[T]) Transformer {
 func MapFromTo[F, T any](fn MapFromToFn[F, T]) Transformer {
 	return StateTransform(func(s *State, opts common.KVOptions) error {
 		val, ok := s.Value.(F)
-		fmt.Printf("StateTransform: initial cast: %v %v\n", val, ok)
+		fmt.Printf("StateTransform: cast to From type: %v (%T) %v\n", val, val, ok)
 
 		if !ok {
 			return ErrCast
 		}
 
 		newVal, err := fn(val, opts)
-		fmt.Printf("StateTransform: fn result: %v %v\n", newVal, err)
+		fmt.Printf("StateTransform: transformation result %v (%T), err: %v\n", newVal, newVal, err)
 		if err != nil {
 			return err
 		}

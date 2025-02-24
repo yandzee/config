@@ -3,7 +3,6 @@ package configurator
 import (
 	"errors"
 	"fmt"
-	"reflect"
 	"strconv"
 	"testing"
 )
@@ -35,14 +34,14 @@ func TestConfigurator(t *testing.T) {
 		},
 		{
 			Action: func(cfg *Configurator) {
-				cfg.Str("4202", nil, false).Bool()
+				cfg.Str("4202", nil, false).Int()
 			},
 			ExpectedResults: []ValueResult[any]{
 				{
 					Source: NewStr("4202", nil, false),
-					Value:  nil,
+					Value:  0,
 					Error:  nil,
-					Flags:  DescFlagRequired | DescFlagNotPresented,
+					Flags:  DescFlagRequired,
 				},
 			},
 		},
@@ -53,7 +52,7 @@ func TestConfigurator(t *testing.T) {
 			ExpectedResults: []ValueResult[any]{
 				{
 					Source: NewStr("4203", ErrTest1, true),
-					Value:  nil,
+					Value:  0,
 					Error:  ErrTest1,
 					Flags:  DescFlagRequired | DescFlagLookupError,
 				},
@@ -66,91 +65,149 @@ func TestConfigurator(t *testing.T) {
 			ExpectedResults: []ValueResult[any]{
 				{
 					Source: NewStr("4204", ErrTest2, false),
-					Value:  nil,
-					Error:  nil,
-					Flags:  DescFlagRequired | DescFlagNotPresented,
+					Value:  0,
+					Error:  ErrTest2,
+					Flags:  DescFlagRequired | DescFlagLookupError,
 				},
 			},
 		},
 		{
 			Action: func(cfg *Configurator) {
-				cfg.Str("4205", nil, true).Bool()
+				cfg.Str("s4205", nil, true).Int()
 			},
 			ExpectedResults: []ValueResult[any]{
 				{
-					Source: NewStr("4205", nil, true),
-					Value:  nil,
+					Source: NewStr("s4205", nil, true),
+					Value:  0,
 					Error:  strconv.ErrSyntax,
-					Flags:  DescFlagRequired | DescFlagParseError,
+					Flags:  DescFlagRequired | DescFlagPresented | DescFlagParseError,
 				},
 			},
 		},
 		{
 			Action: func(cfg *Configurator) {
-				cfg.Str("T", nil, true).Bool()
-			},
-			ExpectedResults: []ValueResult[any]{
-				{
-					Source: NewStr("T", nil, true),
-					Value:  true,
-					Error:  nil,
-					Flags:  DescFlagRequired | DescFlagPresented,
-				},
-			},
-		},
-		{
-			Action: func(cfg *Configurator) {
-				cfg.Str("T", nil, true).BoolOr(true)
-			},
-			ExpectedResults: []ValueResult[any]{
-				{
-					Source: NewStr("T", nil, true),
-					Value:  true,
-					Error:  nil,
-					Flags:  DescFlagPresented,
-				},
-			},
-		},
-		{
-			Action: func(cfg *Configurator) {
-				cfg.Str("T", nil, false).BoolOr(true)
-			},
-			ExpectedResults: []ValueResult[any]{
-				{
-					Source: NewStr("T", nil, false),
-					Value:  true,
-					Error:  nil,
-					Flags:  DescFlagNotPresented | DescFlagDefaulted,
-				},
-			},
-		},
-		{
-			Action: func(cfg *Configurator) {
-				cfg.Str("4206", nil, true).BoolOrFn(func() (bool, error) {
-					return false, ErrTest1
-				})
+				cfg.Str("4206", nil, true).IntOr(4207)
 			},
 			ExpectedResults: []ValueResult[any]{
 				{
 					Source: NewStr("4206", nil, true),
-					Value:  nil,
-					Error:  ErrTest1,
+					Value:  4206,
+					Error:  nil,
 					Flags:  DescFlagPresented,
 				},
 			},
 		},
 		{
 			Action: func(cfg *Configurator) {
-				cfg.Str("4207", nil, false).BoolOrFn(func() (bool, error) {
-					return false, ErrTest1
+				cfg.Str("4207", nil, false).IntOr(4208)
+			},
+			ExpectedResults: []ValueResult[any]{
+				{
+					Source: NewStr("4207", nil, true),
+					Value:  4208,
+					Error:  nil,
+					Flags:  DescFlagDefaulted,
+				},
+			},
+		},
+		{
+			Action: func(cfg *Configurator) {
+				cfg.Str("4208", ErrTest1, true).IntOr(4209)
+			},
+			ExpectedResults: []ValueResult[any]{
+				{
+					Source: NewStr("4208", ErrTest1, true),
+					Value:  0,
+					Error:  ErrTest1,
+					Flags:  DescFlagLookupError,
+				},
+			},
+		},
+		{
+			Action: func(cfg *Configurator) {
+				cfg.Str("4209", ErrTest2, false).IntOr(4210)
+			},
+			ExpectedResults: []ValueResult[any]{
+				{
+					Source: NewStr("4209", ErrTest2, true),
+					Value:  0,
+					Error:  ErrTest2,
+					Flags:  DescFlagLookupError,
+				},
+			},
+		},
+		{
+			Action: func(cfg *Configurator) {
+				cfg.Str("4210", nil, true).IntOrFn(func() (int, error) {
+					return 4211, nil
 				})
 			},
 			ExpectedResults: []ValueResult[any]{
 				{
-					Source: NewStr("4207", nil, false),
-					Value:  nil,
+					Source: NewStr("4210", nil, true),
+					Value:  4210,
+					Error:  nil,
+					Flags:  DescFlagPresented,
+				},
+			},
+		},
+		{
+			Action: func(cfg *Configurator) {
+				cfg.Str("4211", nil, false).IntOrFn(func() (int, error) {
+					return 4212, nil
+				})
+			},
+			ExpectedResults: []ValueResult[any]{
+				{
+					Source: NewStr("4211", nil, false),
+					Value:  4212,
+					Error:  nil,
+					Flags:  DescFlagDefaulted,
+				},
+			},
+		},
+		{
+			Action: func(cfg *Configurator) {
+				cfg.Str("4212", ErrTest1, true).IntOrFn(func() (int, error) {
+					return 4213, nil
+				})
+			},
+			ExpectedResults: []ValueResult[any]{
+				{
+					Source: NewStr("4212", ErrTest1, true),
+					Value:  0,
 					Error:  ErrTest1,
-					Flags:  DescFlagPresented | DescFlagCustomError,
+					Flags:  DescFlagLookupError,
+				},
+			},
+		},
+		{
+			Action: func(cfg *Configurator) {
+				cfg.Str("4213", ErrTest2, false).IntOrFn(func() (int, error) {
+					return 4214, nil
+				})
+			},
+			ExpectedResults: []ValueResult[any]{
+				{
+					Source: NewStr("4213", ErrTest2, false),
+					Value:  0,
+					Error:  ErrTest2,
+					Flags:  DescFlagLookupError,
+				},
+			},
+		},
+		{
+			Action: func(cfg *Configurator) {
+				cfg.Str("4214", nil, false).IntOrFn(func() (int, error) {
+					return 4215, ErrTest1
+				})
+			},
+			ExpectedResults: []ValueResult[any]{
+				{
+					Source: NewStr("4214", nil, false),
+					Value:  4215,
+					Error:  ErrTest1,
+					Flags:  DescFlagDefaulted | DescFlagCustomError,
 				},
 			},
 		},
@@ -162,66 +219,60 @@ func runConfiguratorTests[T any](t *testing.T, tests []ConfiguratorTest[T]) {
 		t.Run(fmt.Sprintf("Test %d", idx), func(t *testing.T) {
 			cfg := Configurator{}
 
-			getter := cfg.Source(ct.Input)
-			var output any
+			ct.Action(&cfg)
 
-			switch {
-			case ct.Default != nil:
-				output = getter.AnyOr(*ct.Default)
-			case ct.DefaultFn != nil:
-				fn := func() (any, error) {
-					return ct.DefaultFn()
-				}
-
-				output = getter.AnyOrFn(fn)
-			default:
-				output = getter.Any()
-			}
-
-			if ct.Expected != nil && output != nil {
-				casted, ok := output.(T)
-				if !ok {
-					t.Fatalf(
-						"Failed to coerce value: %v (%T) to %s, (is nil: %v)\n",
-						output,
-						output,
-						typename[T](),
-						output == nil,
-					)
-				}
-
-				if !reflect.DeepEqual(*ct.Expected, casted) {
-					t.Fatalf(
-						"Expected output: %v (%T), got: %v (%T)\n",
-						*ct.Expected,
-						*ct.Expected,
-						casted,
-						casted,
-					)
-				}
-			} else if ct.Expected == nil && output != nil {
-				t.Fatalf("Expected value is nil, but output is %v (%T)\n", output, output)
-			} else if ct.Expected != nil && output == nil {
-				t.Fatalf("Expected %v (%T), but output is nil\n", *ct.Expected, *ct.Expected)
-			}
-
-			logRecords := cfg.LogRecords()
-			if len(logRecords) != ct.ExpectedLogRecords {
+			if expLen := len(ct.ExpectedResults); expLen != len(cfg.ValueResults) {
 				t.Fatalf(
-					"Num of log records is invalid, expected: %d, got: %d;\n%v\n",
-					ct.ExpectedLogRecords,
-					len(logRecords),
-					logRecords,
+					"Value results amount doesnt match, expected %d, got: %d\n%v\n",
+					expLen,
+					len(cfg.ValueResults),
+					cfg.ValueResults,
 				)
+			}
+
+			for i, expResult := range ct.ExpectedResults {
+				gotResult := cfg.ValueResults[i]
+
+				checkValueResults[T](t, i, &expResult, gotResult)
 			}
 		})
 	}
 }
 
-func valptr[T any](val T) *T {
-	return &val
-}
+func checkValueResults[T any](t *testing.T, idx int, exp, got *ValueResult[any]) {
+	if exp == nil || got == nil {
+		t.Fatalf("Value result %d: some value results are nil\n", idx)
+	}
 
-func typename[T any]() string {
-	return reflect.ValueOf(*new(T)).Kind().String()
+	if exp.Flags != got.Flags {
+		t.Fatalf(
+			"Value result %d: flags are not equal, exp: %s (%v), got: %s (%v)\n",
+			idx,
+			exp.Flags,
+			exp.Flags.Pairs(),
+			got.Flags,
+			got.Flags.Pairs(),
+		)
+
+	}
+
+	if !errors.Is(got.Error, exp.Error) {
+		t.Fatalf(
+			"Value result %d: errors are not equal, exp: %v, got: %v\n",
+			idx,
+			exp.Error,
+			got.Error,
+		)
+	}
+
+	if exp.Value != got.Value {
+		t.Fatalf(
+			"Value result %d: values are not equal, exp: %v (%T), got: %v (%T)\n",
+			idx,
+			exp.Value,
+			exp.Value,
+			got.Value,
+			got.Value,
+		)
+	}
 }

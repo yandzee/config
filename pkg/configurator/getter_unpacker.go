@@ -53,15 +53,13 @@ func (sp *GetterUnpacker[T]) ReadSource(src source.StringSource) *ValueResult[T]
 		Error:  err,
 	}
 
+	if sp.defFn == nil && sp.def == nil {
+		result.Flags.Add(DescFlagRequired)
+	}
+
 	if err != nil {
 		result.Flags.Add(DescFlagLookupError)
 		return result
-	}
-
-	if sp.defFn == nil && sp.def == nil {
-		result.Flags.Add(DescFlagRequired)
-	} else {
-		result.Flags.Add(DescFlagDefaulted)
 	}
 
 	if presented {
@@ -87,17 +85,20 @@ func (sp *GetterUnpacker[T]) ReadSource(src source.StringSource) *ValueResult[T]
 			result.Flags.Add(DescFlagParseError)
 			result.Error = transform.ErrCast
 		}
-	} else if result.Flags.IsDefaulted() {
-		if sp.defFn != nil {
-			result.Value, result.Error = sp.defFn()
-		} else if sp.def != nil {
-			result.Value = *sp.def
-		}
 
-		if result.Error != nil {
-			result.Flags.Add(DescFlagCustomError)
-			result.Flags.Remove(DescFlagDefaulted)
-		}
+		return result
+	}
+
+	if sp.defFn != nil {
+		result.Value, result.Error = sp.defFn()
+		result.Flags.Add(DescFlagDefaulted)
+	} else if sp.def != nil {
+		result.Value = *sp.def
+		result.Flags.Add(DescFlagDefaulted)
+	}
+
+	if result.Error != nil {
+		result.Flags.Add(DescFlagCustomError)
 	}
 
 	return result
