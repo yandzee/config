@@ -7,6 +7,8 @@ import (
 	"github.com/yandzee/config/pkg/source"
 )
 
+const LogAttrValue = "value"
+
 type ValueResult[T any] struct {
 	Source source.StringSource
 	Value  T
@@ -32,7 +34,7 @@ func (er *ValueResult[T]) LogRecord(withValue bool) slog.Record {
 	rec.Add(er.LogAttrs()...)
 
 	if withValue {
-		rec.Add(slog.Any("value", er.Value))
+		rec.Add(slog.Any(LogAttrValue, er.Value))
 	}
 
 	return rec
