@@ -6,7 +6,7 @@ type StateTransformer struct {
 
 func (st *StateTransformer) Chain(t Transformer) Transformer {
 	return &StateTransformer{
-		Fn: func(state *State) error {
+		Fn: func(state State) error {
 			if err := st.Transform(state); err != nil {
 				return err
 			}
@@ -16,6 +16,6 @@ func (st *StateTransformer) Chain(t Transformer) Transformer {
 	}
 }
 
-func (st *StateTransformer) Transform(state *State) error {
+func (st *StateTransformer) Transform(state State) error {
 	return st.Fn(state)
 }

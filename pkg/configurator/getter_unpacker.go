@@ -1,8 +1,11 @@
 package configurator
 
 import (
+	"errors"
+	"fmt"
+
 	"github.com/yandzee/config/pkg/source"
-	"github.com/yandzee/config/pkg/str/transform"
+	"github.com/yandzee/config/pkg/transform"
 )
 
 type GetterUnpacker[T any] struct {
@@ -10,6 +13,8 @@ type GetterUnpacker[T any] struct {
 	// defFn        common.DefaultFn[T]
 	transformers []transform.Transformer
 }
+
+type Defaulter[T any] func() (T, error)
 
 func NewGetterUnpacker[T any]() *GetterUnpacker[T] {
 	return &GetterUnpacker[T]{}
@@ -20,15 +25,39 @@ func (sp *GetterUnpacker[T]) Transformers(trs ...transform.Transformer) *GetterU
 	return sp
 }
 
-// func (sp *GetterUnpacker[T]) Default(def T) *GetterUnpacker[T] {
-// 	sp.def = &def
-// 	return sp
-// }
-//
-// func (sp *GetterUnpacker[T]) DefaultFn(fn common.DefaultFn[T]) *GetterUnpacker[T] {
-// 	sp.defFn = fn
-// 	return sp
-// }
+func (sp *GetterUnpacker[T]) Default(def T) *GetterUnpacker[T] {
+	return sp.DefaultFn(func() (T, error) {
+		return def, nil
+	})
+}
+
+func (sp *GetterUnpacker[T]) DefaultFn(fn Defaulter[T]) *GetterUnpacker[T] {
+	tr := transform.StateTransform(func(state transform.State) error {
+		unpackState, ok := state.(*UnpackState)
+		if !ok {
+			return fmt.Errorf("Failed to coerce state to UnpackState")
+		}
+
+		unpackState.IsDefaulterSet = true
+		if unpackState.IsInitialized {
+			return nil
+		}
+
+		value, err := fn()
+		if err != nil {
+			unpackState.DefaulterError = err
+			return err
+		}
+
+		unpackState.IsDefaulted = true
+		unpackState.Value = value
+		fmt.Printf("Defaulted: %v\n", unpackState.Value)
+
+		return nil
+	})
+
+	return sp.Transformers(tr)
+}
 
 func (sp *GetterUnpacker[T]) Unwrap(g *Getter) T {
 	return sp.Parse(g).Value
@@ -57,14 +86,12 @@ func (sp *GetterUnpacker[T]) ReadSource(src source.StringSource) *ValueResult[T]
 		return result
 	}
 
-	state := &transform.State{
-		Initialized: presented,
-		Defaulted:   false,
+	state := &UnpackState{
+		IsInitialized: presented,
 	}
 
 	if presented {
 		result.Flags.Add(DescFlagPresented)
-
 		state.Value = str
 	}
 
@@ -72,14 +99,22 @@ func (sp *GetterUnpacker[T]) ReadSource(src source.StringSource) *ValueResult[T]
 		result.Error = tr.Transform(state)
 
 		if result.Error != nil {
-			result.Flags.Add(DescFlagTransformError)
 			break
 		}
 	}
 
-	if state.Defaulted {
+	if state.DefaulterError != nil {
+		result.Error = state.DefaulterError
+		result.Flags.Add(DescFlagCustomError)
+	} else if result.Error != nil {
+		result.Flags.Add(DescFlagTransformError)
+	}
+
+	if state.IsDefaulted {
 		result.Flags.Add(DescFlagDefaulted)
-	} else {
+	}
+
+	if !state.IsDefaulterSet {
 		result.Flags.Add(DescFlagRequired)
 	}
 
@@ -87,13 +122,21 @@ func (sp *GetterUnpacker[T]) ReadSource(src source.StringSource) *ValueResult[T]
 		return result
 	}
 
-	if state.Initialized {
+	if state.IsInitialized || state.IsDefaulted {
 		ok := false
 		result.Value, ok = state.Value.(T)
 
 		if !ok {
 			result.Flags.Add(DescFlagTransformError)
-			result.Error = transform.ErrCast
+			result.Error = errors.Join(
+				transform.ErrCast,
+				fmt.Errorf(
+					"Failed to cast resulting value %v (%T) to type %T",
+					state.Value,
+					state.Value,
+					result.Value,
+				),
+			)
 
 			return result
 		}

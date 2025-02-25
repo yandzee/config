@@ -3,7 +3,7 @@ package configurator
 import (
 	"github.com/yandzee/config/pkg/source"
 	"github.com/yandzee/config/pkg/str"
-	"github.com/yandzee/config/pkg/str/transform"
+	"github.com/yandzee/config/pkg/transform"
 )
 
 type Getter struct {
@@ -14,48 +14,46 @@ type Getter struct {
 func (g *Getter) Int(trs ...transform.Transformer) int {
 	return NewGetterUnpacker[int]().
 		Transformers(trs...).
-		Transformers(transform.Parse(str.Parser.Int)).
+		Transformers(str.Parse(str.Parser.Int)).
 		Unwrap(g)
 }
 
 func (g *Getter) IntOr(def int, trs ...transform.Transformer) int {
 	return NewGetterUnpacker[int]().
+		Default(def).
 		Transformers(trs...).
-		Transformers(
-			transform.Default(def),
-			transform.Parse(str.Parser.Int),
-		).
+		Transformers(str.Parse(str.Parser.Int)).
 		Unwrap(g)
 }
 
-func (g *Getter) IntOrFn(fn transform.Defaulter[int], trs ...transform.Transformer) int {
+func (g *Getter) IntOrFn(fn Defaulter[int], trs ...transform.Transformer) int {
 	return NewGetterUnpacker[int]().
-		Transformers(transform.DefaultFn(fn)).
+		DefaultFn(fn).
 		Transformers(trs...).
-		Transformers(transform.Parse(str.Parser.Int)).
+		Transformers(str.Parse(str.Parser.Int)).
 		Unwrap(g)
 }
 
 func (g *Getter) Bool(trs ...transform.Transformer) bool {
 	return NewGetterUnpacker[bool]().
 		Transformers(trs...).
-		Transformers(transform.Parse(str.Parser.Bool)).
+		Transformers(str.Parse(str.Parser.Bool)).
 		Unwrap(g)
 }
 
 func (g *Getter) BoolOr(def bool, trs ...transform.Transformer) bool {
 	return NewGetterUnpacker[bool]().
-		Transformers(transform.Default(def)).
+		Default(def).
 		Transformers(trs...).
-		Transformers(transform.Parse(str.Parser.Bool)).
+		Transformers(str.Parse(str.Parser.Bool)).
 		Unwrap(g)
 }
 
-func (g *Getter) BoolOrFn(fn transform.Defaulter[bool], trs ...transform.Transformer) bool {
+func (g *Getter) BoolOrFn(fn Defaulter[bool], trs ...transform.Transformer) bool {
 	return NewGetterUnpacker[bool]().
-		Transformers(transform.DefaultFn(fn)).
+		DefaultFn(fn).
 		Transformers(trs...).
-		Transformers(transform.Parse(str.Parser.Bool)).
+		Transformers(str.Parse(str.Parser.Bool)).
 		Unwrap(g)
 }
 
@@ -67,14 +65,14 @@ func (g *Getter) Any(trs ...transform.Transformer) any {
 
 func (g *Getter) AnyOr(def any, trs ...transform.Transformer) any {
 	return NewGetterUnpacker[any]().
-		Transformers(transform.Default(def)).
+		Default(def).
 		Transformers(trs...).
 		Unwrap(g)
 }
 
-func (g *Getter) AnyOrFn(fn transform.Defaulter[any], trs ...transform.Transformer) any {
+func (g *Getter) AnyOrFn(fn Defaulter[any], trs ...transform.Transformer) any {
 	return NewGetterUnpacker[any]().
-		Transformers(transform.DefaultFn(fn)).
+		DefaultFn(fn).
 		Transformers(trs...).
 		Unwrap(g)
 }

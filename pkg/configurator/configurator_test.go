@@ -61,7 +61,7 @@ func TestConfigurator(t *testing.T) {
 				{
 					Value:    0,
 					Error:    ErrTest1,
-					Flags:    DescFlagRequired | DescFlagLookupError,
+					Flags:    DescFlagLookupError,
 					LogLevel: slog.LevelError,
 				},
 			},
@@ -74,7 +74,7 @@ func TestConfigurator(t *testing.T) {
 				{
 					Value:    0,
 					Error:    ErrTest2,
-					Flags:    DescFlagRequired | DescFlagLookupError,
+					Flags:    DescFlagLookupError,
 					LogLevel: slog.LevelError,
 				},
 			},
@@ -212,9 +212,9 @@ func TestConfigurator(t *testing.T) {
 			},
 			ExpectedResults: []ExpectedResult{
 				{
-					Value:    4215,
+					Value:    0,
 					Error:    ErrTest1,
-					Flags:    DescFlagDefaulted | DescFlagCustomError,
+					Flags:    DescFlagCustomError,
 					LogLevel: slog.LevelError,
 				},
 			},
