@@ -3,8 +3,6 @@ package parse
 import (
 	"reflect"
 	"testing"
-
-	"github.com/yandzee/config/pkg/common"
 )
 
 type SplitTest struct {
@@ -17,10 +15,7 @@ func runSplitTests(t *testing.T, td []SplitTest) {
 	p := &StringParser{}
 
 	for i, test := range td {
-		opts := common.KVOptions{}
-		opts.Set("seps", test.Seps)
-
-		result, err := p.Strings(test.Str, opts)
+		result, err := p.Strings(test.Str, test.Seps...)
 		if err != nil {
 			t.Fatalf("Split test %d has failed: %v\n", i, err.Error())
 		}
@@ -85,10 +80,9 @@ func TestStringSplits(t *testing.T) {
 
 func BenchmarkStringSplit(b *testing.B) {
 	p := &StringParser{}
-	opts := common.KVOptions{}
-	opts.Set("seps", []string{",", ";", ":"})
+	seps := []string{",", ";", ":"}
 
 	for b.Loop() {
-		p.Strings("a:b;cde,f", opts)
+		_, _ = p.Strings("a:b;cde,f", seps...)
 	}
 }

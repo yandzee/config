@@ -1,23 +1,21 @@
 package transform
 
-import "github.com/yandzee/config/pkg/common"
-
 type StateTransformer struct {
 	Fn StateFn
 }
 
-func (st *StateTransformer) Chain(t Transformer) (Transformer, error) {
+func (st *StateTransformer) Chain(t Transformer) Transformer {
 	return &StateTransformer{
-		Fn: func(s *State, opts common.KVOptions) error {
-			if err := st.Transform(s, opts); err != nil {
+		Fn: func(state *State) error {
+			if err := st.Transform(state); err != nil {
 				return err
 			}
 
-			return t.Transform(s, opts)
+			return t.Transform(state)
 		},
-	}, nil
+	}
 }
 
-func (st *StateTransformer) Transform(s *State, opts common.KVOptions) error {
-	return st.Fn(s, opts)
+func (st *StateTransformer) Transform(state *State) error {
+	return st.Fn(state)
 }

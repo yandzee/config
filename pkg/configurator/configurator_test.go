@@ -87,7 +87,7 @@ func TestConfigurator(t *testing.T) {
 				{
 					Value:    0,
 					Error:    strconv.ErrSyntax,
-					Flags:    DescFlagRequired | DescFlagPresented | DescFlagParseError,
+					Flags:    DescFlagRequired | DescFlagPresented | DescFlagTransformError,
 					LogLevel: slog.LevelError,
 				},
 			},
@@ -259,12 +259,13 @@ func checkValueResults[T any](
 
 	if exp.Flags != got.Flags {
 		t.Fatalf(
-			"Value result %d: flags are not equal, exp: %s (%v), got: %s (%v)\n",
+			"Value result %d: flags are not equal, exp: %s (%v), got: %s (%v), err: %v\n",
 			idx,
 			exp.Flags,
 			exp.Flags.Pairs(),
 			got.Flags,
 			got.Flags.Pairs(),
+			got.Error,
 		)
 
 	}
