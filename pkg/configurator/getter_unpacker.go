@@ -142,19 +142,5 @@ func (sp *GetterUnpacker[T]) ReadSource(src source.StringSource) *ValueResult[T]
 		}
 	}
 
-	// return result
-
-	// if sp.defFn != nil {
-	// 	result.Value, result.Error = sp.defFn()
-	// 	result.Flags.Add(DescFlagDefaulted)
-	// } else if sp.def != nil {
-	// 	result.Value = *sp.def
-	// 	result.Flags.Add(DescFlagDefaulted)
-	// }
-
-	// if result.Error != nil {
-	// 	result.Flags.Add(DescFlagCustomError)
-	// }
-
 	return result
 }
