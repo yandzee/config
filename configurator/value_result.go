@@ -4,7 +4,7 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/yandzee/config/pkg/source"
+	"github.com/yandzee/config/source"
 )
 
 const LogAttrValue = "value"

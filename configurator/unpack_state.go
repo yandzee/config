@@ -1,6 +1,6 @@
 package configurator
 
-import "github.com/yandzee/config/pkg/transform"
+import "github.com/yandzee/config/transform"
 
 type UnpackState struct {
 	Value          any

@@ -4,13 +4,11 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/yandzee/config/pkg/source"
-	"github.com/yandzee/config/pkg/transform"
+	"github.com/yandzee/config/source"
+	"github.com/yandzee/config/transform"
 )
 
 type GetterUnpacker[T any] struct {
-	// def          *T
-	// defFn        common.DefaultFn[T]
 	transformers []transform.Transformer
 }
 

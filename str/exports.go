@@ -5,8 +5,8 @@ import (
 	"encoding/hex"
 	"strings"
 
-	"github.com/yandzee/config/pkg/str/parse"
-	"github.com/yandzee/config/pkg/transform"
+	"github.com/yandzee/config/str/parse"
+	"github.com/yandzee/config/transform"
 )
 
 var (

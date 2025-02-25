@@ -3,7 +3,7 @@ package configurator
 import (
 	"log/slog"
 
-	"github.com/yandzee/config/pkg/source"
+	"github.com/yandzee/config/source"
 )
 
 type LogOption struct{}

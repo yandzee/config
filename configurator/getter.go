@@ -4,9 +4,9 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/yandzee/config/pkg/source"
-	"github.com/yandzee/config/pkg/str"
-	"github.com/yandzee/config/pkg/transform"
+	"github.com/yandzee/config/source"
+	"github.com/yandzee/config/str"
+	"github.com/yandzee/config/transform"
 )
 
 type Getter struct {
