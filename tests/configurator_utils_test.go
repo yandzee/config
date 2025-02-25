@@ -1,4 +1,6 @@
-package configurator
+package configurator_test
+
+import "github.com/yandzee/config/configurator"
 
 type StrSource struct {
 	Str       string
@@ -26,6 +28,6 @@ func (ss *StrSource) Kind() string {
 	return "str"
 }
 
-func (c *Configurator) Str(str string, err error, ok ...bool) *Getter {
+func Str(c *configurator.Configurator, str string, err error, ok ...bool) *configurator.Getter {
 	return c.Source(NewStr(str, err, ok...))
 }

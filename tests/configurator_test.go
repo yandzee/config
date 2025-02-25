@@ -1,4 +1,4 @@
-package configurator
+package configurator_test
 
 import (
 	"errors"
@@ -6,6 +6,8 @@ import (
 	"log/slog"
 	"strconv"
 	"testing"
+
+	"github.com/yandzee/config/configurator"
 )
 
 var (
@@ -14,139 +16,139 @@ var (
 )
 
 type ConfiguratorTest[T any] struct {
-	Action          func(*Configurator)
+	Action          func(*configurator.Configurator)
 	ExpectedResults []ExpectedResult
 }
 
 type ExpectedResult struct {
 	Value    any
 	Error    error
-	Flags    DescriptorFlag
+	Flags    configurator.DescriptorFlag
 	LogLevel slog.Level
 }
 
 func TestConfigurator(t *testing.T) {
 	runConfiguratorTests(t, []ConfiguratorTest[string]{
 		{
-			Action: func(cfg *Configurator) {
-				cfg.Str("4201", nil, true).Int()
+			Action: func(cfg *configurator.Configurator) {
+				Str(cfg, "4201", nil, true).Int()
 			},
 			ExpectedResults: []ExpectedResult{
 				{
 					Value:    4201,
 					Error:    nil,
-					Flags:    DescFlagRequired | DescFlagPresented,
+					Flags:    configurator.DescFlagRequired | configurator.DescFlagPresented,
 					LogLevel: slog.LevelInfo,
 				},
 			},
 		},
 		{
-			Action: func(cfg *Configurator) {
-				cfg.Str("4202", nil, false).Int()
+			Action: func(cfg *configurator.Configurator) {
+				Str(cfg, "4202", nil, false).Int()
 			},
 			ExpectedResults: []ExpectedResult{
 				{
 					Value:    0,
 					Error:    nil,
-					Flags:    DescFlagRequired,
+					Flags:    configurator.DescFlagRequired,
 					LogLevel: slog.LevelError,
 				},
 			},
 		},
 		{
-			Action: func(cfg *Configurator) {
-				cfg.Str("4203", ErrTest1, true).Int()
+			Action: func(cfg *configurator.Configurator) {
+				Str(cfg, "4203", ErrTest1, true).Int()
 			},
 			ExpectedResults: []ExpectedResult{
 				{
 					Value:    0,
 					Error:    ErrTest1,
-					Flags:    DescFlagLookupError,
+					Flags:    configurator.DescFlagLookupError,
 					LogLevel: slog.LevelError,
 				},
 			},
 		},
 		{
-			Action: func(cfg *Configurator) {
-				cfg.Str("4204", ErrTest2, false).Int()
+			Action: func(cfg *configurator.Configurator) {
+				Str(cfg, "4204", ErrTest2, false).Int()
 			},
 			ExpectedResults: []ExpectedResult{
 				{
 					Value:    0,
 					Error:    ErrTest2,
-					Flags:    DescFlagLookupError,
+					Flags:    configurator.DescFlagLookupError,
 					LogLevel: slog.LevelError,
 				},
 			},
 		},
 		{
-			Action: func(cfg *Configurator) {
-				cfg.Str("s4205", nil, true).Int()
+			Action: func(cfg *configurator.Configurator) {
+				Str(cfg, "s4205", nil, true).Int()
 			},
 			ExpectedResults: []ExpectedResult{
 				{
 					Value:    0,
 					Error:    strconv.ErrSyntax,
-					Flags:    DescFlagRequired | DescFlagPresented | DescFlagTransformError,
+					Flags:    configurator.DescFlagRequired | configurator.DescFlagPresented | configurator.DescFlagTransformError,
 					LogLevel: slog.LevelError,
 				},
 			},
 		},
 		{
-			Action: func(cfg *Configurator) {
-				cfg.Str("4206", nil, true).IntOr(4207)
+			Action: func(cfg *configurator.Configurator) {
+				Str(cfg, "4206", nil, true).IntOr(4207)
 			},
 			ExpectedResults: []ExpectedResult{
 				{
 					Value:    4206,
 					Error:    nil,
-					Flags:    DescFlagPresented,
+					Flags:    configurator.DescFlagPresented,
 					LogLevel: slog.LevelInfo,
 				},
 			},
 		},
 		{
-			Action: func(cfg *Configurator) {
-				cfg.Str("4207", nil, false).IntOr(4208)
+			Action: func(cfg *configurator.Configurator) {
+				Str(cfg, "4207", nil, false).IntOr(4208)
 			},
 			ExpectedResults: []ExpectedResult{
 				{
 					Value:    4208,
 					Error:    nil,
-					Flags:    DescFlagDefaulted,
+					Flags:    configurator.DescFlagDefaulted,
 					LogLevel: slog.LevelWarn,
 				},
 			},
 		},
 		{
-			Action: func(cfg *Configurator) {
-				cfg.Str("4208", ErrTest1, true).IntOr(4209)
+			Action: func(cfg *configurator.Configurator) {
+				Str(cfg, "4208", ErrTest1, true).IntOr(4209)
 			},
 			ExpectedResults: []ExpectedResult{
 				{
 					Value:    0,
 					Error:    ErrTest1,
-					Flags:    DescFlagLookupError,
+					Flags:    configurator.DescFlagLookupError,
 					LogLevel: slog.LevelError,
 				},
 			},
 		},
 		{
-			Action: func(cfg *Configurator) {
-				cfg.Str("4209", ErrTest2, false).IntOr(4210)
+			Action: func(cfg *configurator.Configurator) {
+				Str(cfg, "4209", ErrTest2, false).IntOr(4210)
 			},
 			ExpectedResults: []ExpectedResult{
 				{
 					Value:    0,
 					Error:    ErrTest2,
-					Flags:    DescFlagLookupError,
+					Flags:    configurator.DescFlagLookupError,
 					LogLevel: slog.LevelError,
 				},
 			},
 		},
 		{
-			Action: func(cfg *Configurator) {
-				cfg.Str("4210", nil, true).IntOrFn(func() (int, error) {
+			Action: func(cfg *configurator.Configurator) {
+				Str(cfg, "4210", nil, true).IntOrFn(func() (int, error) {
 					return 4211, nil
 				})
 			},
@@ -154,14 +156,14 @@ func TestConfigurator(t *testing.T) {
 				{
 					Value:    4210,
 					Error:    nil,
-					Flags:    DescFlagPresented,
+					Flags:    configurator.DescFlagPresented,
 					LogLevel: slog.LevelInfo,
 				},
 			},
 		},
 		{
-			Action: func(cfg *Configurator) {
-				cfg.Str("4211", nil, false).IntOrFn(func() (int, error) {
+			Action: func(cfg *configurator.Configurator) {
+				Str(cfg, "4211", nil, false).IntOrFn(func() (int, error) {
 					return 4212, nil
 				})
 			},
@@ -169,14 +171,14 @@ func TestConfigurator(t *testing.T) {
 				{
 					Value:    4212,
 					Error:    nil,
-					Flags:    DescFlagDefaulted,
+					Flags:    configurator.DescFlagDefaulted,
 					LogLevel: slog.LevelWarn,
 				},
 			},
 		},
 		{
-			Action: func(cfg *Configurator) {
-				cfg.Str("4212", ErrTest1, true).IntOrFn(func() (int, error) {
+			Action: func(cfg *configurator.Configurator) {
+				Str(cfg, "4212", ErrTest1, true).IntOrFn(func() (int, error) {
 					return 4213, nil
 				})
 			},
@@ -184,14 +186,14 @@ func TestConfigurator(t *testing.T) {
 				{
 					Value:    0,
 					Error:    ErrTest1,
-					Flags:    DescFlagLookupError,
+					Flags:    configurator.DescFlagLookupError,
 					LogLevel: slog.LevelError,
 				},
 			},
 		},
 		{
-			Action: func(cfg *Configurator) {
-				cfg.Str("4213", ErrTest2, false).IntOrFn(func() (int, error) {
+			Action: func(cfg *configurator.Configurator) {
+				Str(cfg, "4213", ErrTest2, false).IntOrFn(func() (int, error) {
 					return 4214, nil
 				})
 			},
@@ -199,14 +201,14 @@ func TestConfigurator(t *testing.T) {
 				{
 					Value:    0,
 					Error:    ErrTest2,
-					Flags:    DescFlagLookupError,
+					Flags:    configurator.DescFlagLookupError,
 					LogLevel: slog.LevelError,
 				},
 			},
 		},
 		{
-			Action: func(cfg *Configurator) {
-				cfg.Str("4214", nil, false).IntOrFn(func() (int, error) {
+			Action: func(cfg *configurator.Configurator) {
+				Str(cfg, "4214", nil, false).IntOrFn(func() (int, error) {
 					return 4215, ErrTest1
 				})
 			},
@@ -214,7 +216,7 @@ func TestConfigurator(t *testing.T) {
 				{
 					Value:    0,
 					Error:    ErrTest1,
-					Flags:    DescFlagCustomError,
+					Flags:    configurator.DescFlagCustomError,
 					LogLevel: slog.LevelError,
 				},
 			},
@@ -225,7 +227,7 @@ func TestConfigurator(t *testing.T) {
 func runConfiguratorTests[T any](t *testing.T, tests []ConfiguratorTest[T]) {
 	for idx, ct := range tests {
 		t.Run(fmt.Sprintf("Test %d", idx), func(t *testing.T) {
-			cfg := Configurator{}
+			cfg := configurator.Configurator{}
 
 			ct.Action(&cfg)
 
@@ -251,7 +253,7 @@ func checkValueResults[T any](
 	t *testing.T,
 	idx int,
 	exp *ExpectedResult,
-	got *ValueResult[any],
+	got *configurator.ValueResult[any],
 ) {
 	if exp == nil || got == nil {
 		t.Fatalf("Value result %d: some value results are nil\n", idx)
@@ -294,7 +296,7 @@ func checkValueResults[T any](
 	hasValue := false
 
 	logEntry.Attrs(func(a slog.Attr) bool {
-		hasValue = hasValue || a.Key == LogAttrValue
+		hasValue = hasValue || a.Key == configurator.LogAttrValue
 		return true
 	})
 
