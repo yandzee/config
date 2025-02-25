@@ -6,8 +6,8 @@ import (
 )
 
 var (
-	ErrTransform = errors.New("Failed to transform data")
-	ErrCast      = errors.New("Failed to cast value type")
+	ErrTransform  = errors.New("Failed to transform data")
+	ErrConversion = errors.New("Failed to convert value type")
 
 	ErrNoValue = errors.New("Transformable state has no value")
 )
@@ -37,17 +37,9 @@ func Map[F, T any](fn MapFromToFn[F, T]) Transformer {
 		}
 
 		value, ok := stateValue.(F)
-		fmt.Printf(
-			"StateTransform: cast %v (%T) to type %T: %v\n",
-			stateValue,
-			stateValue,
-			value,
-			value,
-		)
-
 		if !ok {
 			return errors.Join(
-				ErrCast,
+				ErrConversion,
 				fmt.Errorf(
 					"Failed to cast state value `%v` of type %T to type %T",
 					stateValue,
@@ -58,13 +50,6 @@ func Map[F, T any](fn MapFromToFn[F, T]) Transformer {
 		}
 
 		newValue, err := fn(value)
-		fmt.Printf(
-			"StateTransform: transformation result, value: %v (%T), err: %v\n",
-			newValue,
-			newValue,
-			err,
-		)
-
 		if err != nil {
 			return err
 		}
@@ -77,4 +62,14 @@ func StateTransform(fn StateFn) Transformer {
 	return &StateTransformer{
 		Fn: fn,
 	}
+}
+
+func Run(state State, trs []Transformer) error {
+	for _, tr := range trs {
+		if err := tr.Transform(state); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

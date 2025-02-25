@@ -25,6 +25,7 @@ func (ss *StrSource) Name() string {
 func (ss *StrSource) Kind() string {
 	return "str"
 }
+
 func (c *Configurator) Str(str string, err error, ok ...bool) *Getter {
 	return c.Source(NewStr(str, err, ok...))
 }

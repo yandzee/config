@@ -51,7 +51,6 @@ func (sp *GetterUnpacker[T]) DefaultFn(fn Defaulter[T]) *GetterUnpacker[T] {
 
 		unpackState.IsDefaulted = true
 		unpackState.Value = value
-		fmt.Printf("Defaulted: %v\n", unpackState.Value)
 
 		return nil
 	})
@@ -95,13 +94,7 @@ func (sp *GetterUnpacker[T]) ReadSource(src source.StringSource) *ValueResult[T]
 		state.Value = str
 	}
 
-	for _, tr := range sp.transformers {
-		result.Error = tr.Transform(state)
-
-		if result.Error != nil {
-			break
-		}
-	}
+	result.Error = transform.Run(state, sp.transformers)
 
 	if state.DefaulterError != nil {
 		result.Error = state.DefaulterError
@@ -122,25 +115,26 @@ func (sp *GetterUnpacker[T]) ReadSource(src source.StringSource) *ValueResult[T]
 		return result
 	}
 
-	if state.IsInitialized || state.IsDefaulted {
-		ok := false
-		result.Value, ok = state.Value.(T)
-
-		if !ok {
-			result.Flags.Add(DescFlagTransformError)
-			result.Error = errors.Join(
-				transform.ErrCast,
-				fmt.Errorf(
-					"Failed to cast resulting value %v (%T) to type %T",
-					state.Value,
-					state.Value,
-					result.Value,
-				),
-			)
-
-			return result
-		}
+	if !state.IsInitialized && !state.IsDefaulted {
+		return result
 	}
+
+	ok := false
+	result.Value, ok = state.Value.(T)
+	if ok {
+		return result
+	}
+
+	result.Flags.Add(DescFlagTransformError)
+	result.Error = errors.Join(
+		transform.ErrConversion,
+		fmt.Errorf(
+			"Failed to cast resulting value %v (%T) to type %T",
+			state.Value,
+			state.Value,
+			result.Value,
+		),
+	)
 
 	return result
 }
