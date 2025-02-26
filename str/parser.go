@@ -1,11 +1,6 @@
-package parse
+package str
 
 import (
-	"crypto/ecdsa"
-	"crypto/x509"
-	"encoding/pem"
-	"errors"
-	"fmt"
 	"log/slog"
 	"slices"
 	"strconv"
@@ -13,9 +8,13 @@ import (
 	"time"
 )
 
+var (
+	DefaultParser = &StringParser{}
+)
+
 type StringParser struct{}
 
-type Fn[T any] func(string) (T, error)
+type ParseFn[T any] func(string) (T, error)
 
 func (sp *StringParser) Int(v string) (int, error) {
 	parsed, err := strconv.ParseInt(v, 10, 0)
@@ -111,23 +110,6 @@ func (sp *StringParser) Strings(v string, seps ...string) ([]string, error) {
 
 func (sp *StringParser) Duration(v string) (time.Duration, error) {
 	return time.ParseDuration(v)
-}
-
-func (sp *StringParser) ECPrivateKey(b []byte) (*ecdsa.PrivateKey, error) {
-	block, _ := pem.Decode(b)
-	if block == nil {
-		return nil, fmt.Errorf("PEM block is not found")
-	}
-
-	pk, err := x509.ParseECPrivateKey(block.Bytes)
-	if err != nil {
-		return nil, errors.Join(
-			fmt.Errorf("Failed to x509.ParseECPrivateKey"),
-			err,
-		)
-	}
-
-	return pk, nil
 }
 
 func (sp *StringParser) SlogLevel(v string) (slog.Level, error) {
