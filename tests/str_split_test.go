@@ -1,8 +1,10 @@
-package parse
+package tests
 
 import (
 	"reflect"
 	"testing"
+
+	"github.com/yandzee/config/str/parse"
 )
 
 type SplitTest struct {
@@ -12,7 +14,7 @@ type SplitTest struct {
 }
 
 func runSplitTests(t *testing.T, td []SplitTest) {
-	p := &StringParser{}
+	p := &parse.StringParser{}
 
 	for i, test := range td {
 		result, err := p.Strings(test.Str, test.Seps...)
@@ -79,7 +81,7 @@ func TestStringSplits(t *testing.T) {
 }
 
 func BenchmarkStringSplit(b *testing.B) {
-	p := &StringParser{}
+	p := &parse.StringParser{}
 	seps := []string{",", ";", ":"}
 
 	for b.Loop() {

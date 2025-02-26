@@ -1,4 +1,4 @@
-package configurator_test
+package tests
 
 import "github.com/yandzee/config/configurator"
 
