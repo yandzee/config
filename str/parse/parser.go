@@ -113,8 +113,8 @@ func (sp *StringParser) Duration(v string) (time.Duration, error) {
 	return time.ParseDuration(v)
 }
 
-func (sp *StringParser) ECPrivateKey(v string) (*ecdsa.PrivateKey, error) {
-	block, _ := pem.Decode([]byte(v))
+func (sp *StringParser) ECPrivateKey(b []byte) (*ecdsa.PrivateKey, error) {
+	block, _ := pem.Decode(b)
 	if block == nil {
 		return nil, fmt.Errorf("PEM block is not found")
 	}
