@@ -1,7 +1,6 @@
 package configurator
 
 import (
-	"crypto/ecdsa"
 	"log/slog"
 	"time"
 
@@ -441,12 +440,5 @@ func (g *Getter) AnyOrFn(fn Defaulter[any], trs ...transform.Transformer) any {
 	return NewGetterUnpacker[any]().
 		DefaultFn(fn).
 		Transformers(trs...).
-		Unwrap(g)
-}
-
-func (g *Getter) ECPrivateKey(trs ...transform.Transformer) *ecdsa.PrivateKey {
-	return NewGetterUnpacker[*ecdsa.PrivateKey]().
-		Transformers(trs...).
-		Transformers(transformers.ECPrivateKey).
 		Unwrap(g)
 }

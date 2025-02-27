@@ -1,11 +1,8 @@
 package transformers
 
 import (
-	"crypto/ecdsa"
-	"crypto/x509"
 	"encoding/base64"
 	"encoding/hex"
-	"encoding/pem"
 	"errors"
 	"fmt"
 	"strings"
@@ -53,25 +50,6 @@ var (
 	Unhex = ToString.Chain(
 		transform.Map(func(hexstr string) ([]byte, error) {
 			return hex.DecodeString(strings.TrimPrefix(hexstr, "0x"))
-		}),
-	)
-
-	ECPrivateKey = ToBytes.Chain(
-		transform.Map(func(b []byte) (*ecdsa.PrivateKey, error) {
-			block, _ := pem.Decode(b)
-			if block == nil {
-				return nil, fmt.Errorf("PEM block is not found")
-			}
-
-			pk, err := x509.ParseECPrivateKey(block.Bytes)
-			if err != nil {
-				return nil, errors.Join(
-					fmt.Errorf("Failed to x509.ParseECPrivateKey"),
-					err,
-				)
-			}
-
-			return pk, nil
 		}),
 	)
 )
