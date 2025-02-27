@@ -110,3 +110,33 @@ assigned after initialization:
 2025/02/27 18:56:20 INFO Value set name=B64_TWO_STRINGS kind=env is-required=true is-presented=true value=two
 exit status 1
 ```
+
+## Custom type parsing
+
+```go
+var ECPrivateKey = transformers.ToBytes.Chain(
+	transform.Map(func(b []byte) (*ecdsa.PrivateKey, error) {
+		block, _ := pem.Decode(b)
+		if block == nil {
+			return nil, fmt.Errorf("PEM block is not found")
+		}
+
+		pk, err := x509.ParseECPrivateKey(block.Bytes)
+		if err != nil {
+			return nil, errors.Join(
+				fmt.Errorf("Failed to x509.ParseECPrivateKey"),
+				err,
+			)
+		}
+
+		return pk, nil
+	}),
+)
+
+func (c *Config) Init() {
+	key := c.Env("TOKEN_EC_PRIVATE_KEY").Any(transformers.Unbase64, ECPrivateKey)
+	if privateKey, ok := key.(*ecdsa.PrivateKey); ok {
+		c.TokenECPrivateKey = privateKey
+	}
+}
+```
