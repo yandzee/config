@@ -1,3 +1,5 @@
+[![Go Reference](https://pkg.go.dev/badge/github.com/yandzee/config.svg)](https://pkg.go.dev/github.com/yandzee/config)
+
 # Usage
 
 ## Built-in methods
