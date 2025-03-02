@@ -6,6 +6,17 @@ import (
 )
 
 func Of[T any](target *T, cfgrs ...*c.Configurator) *c.Getter[T] {
+	g := empty[T](cfgrs...)
+	g.Target = target
+
+	return g
+}
+
+func Int(cfgrs ...*c.Configurator) *c.Getter[int] {
+	return empty[int](cfgrs...)
+}
+
+func empty[T any](cfgrs ...*c.Configurator) *c.Getter[T] {
 	var configurator *c.Configurator
 
 	for _, cfgr := range cfgrs {
@@ -17,15 +28,8 @@ func Of[T any](target *T, cfgrs ...*c.Configurator) *c.Getter[T] {
 		break
 	}
 
-	trs := []transform.Transformer{}
-
 	return &c.Getter[T]{
-		Target:       target,
 		Configurator: configurator,
-		Transformers: trs,
+		Transformers: []transform.Transformer{},
 	}
-}
-
-func Int() *c.Getter[int] {
-	return &c.Getter[int]{}
 }
