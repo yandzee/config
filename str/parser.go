@@ -73,6 +73,15 @@ func (sp *StringParser) Float64(v string) (float64, error) {
 	return strconv.ParseFloat(v, 64)
 }
 
+func (sp *StringParser) Complex64(v string) (complex64, error) {
+	parsed, err := strconv.ParseComplex(v, 64)
+	return complex64(parsed), err
+}
+
+func (sp *StringParser) Complex128(v string) (complex128, error) {
+	return strconv.ParseComplex(v, 128)
+}
+
 func (sp *StringParser) Bool(v string) (bool, error) {
 	return strconv.ParseBool(v)
 }

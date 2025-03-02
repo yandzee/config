@@ -1,4 +1,4 @@
-package configurator
+package result
 
 import (
 	"log/slog"
@@ -9,14 +9,14 @@ import (
 
 const LogAttrValue = "value"
 
-type ValueResult[T any] struct {
+type Result[T any] struct {
 	Source source.StringSource
 	Value  T
 	Error  error
-	Flags  DescriptorFlag
+	Flags  ResultFlag
 }
 
-func (er *ValueResult[T]) LogAttrs() []any {
+func (er *Result[T]) LogAttrs() []any {
 	attrs := []any{
 		slog.String("name", er.Source.Name()),
 		slog.String("kind", er.Source.Kind()),
@@ -27,7 +27,7 @@ func (er *ValueResult[T]) LogAttrs() []any {
 	return attrs
 }
 
-func (er *ValueResult[T]) LogRecord(withValue bool) slog.Record {
+func (er *Result[T]) LogRecord(withValue bool) slog.Record {
 	lvl, msg := er.LevelAndMessage()
 
 	rec := slog.NewRecord(time.Now(), lvl, msg, 0)
@@ -40,15 +40,11 @@ func (er *ValueResult[T]) LogRecord(withValue bool) slog.Record {
 	return rec
 }
 
-func (er *ValueResult[T]) HasIssues() bool {
-	return er.Error != nil || er.IsRequiredAndNotSet() || er.Flags.IsDefaulted()
-}
-
-func (er *ValueResult[T]) IsRequiredAndNotSet() bool {
+func (er *Result[T]) IsRequiredAndNotSet() bool {
 	return er.Flags.IsRequired() && !er.Flags.IsDefaulted() && !er.Flags.IsPresented()
 }
 
-func (er *ValueResult[T]) LevelAndMessage() (slog.Level, string) {
+func (er *Result[T]) LevelAndMessage() (slog.Level, string) {
 	switch {
 	case er.Error != nil:
 		return slog.LevelError, er.Error.Error()
@@ -61,8 +57,8 @@ func (er *ValueResult[T]) LevelAndMessage() (slog.Level, string) {
 	}
 }
 
-func (er *ValueResult[T]) Any() *ValueResult[any] {
-	return &ValueResult[any]{
+func (er *Result[T]) Any() *Result[any] {
+	return &Result[any]{
 		Source: er.Source,
 		Value:  any(er.Value),
 		Flags:  er.Flags,
