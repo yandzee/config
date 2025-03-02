@@ -1,444 +1,169 @@
 package configurator
 
 import (
+	"errors"
+	"fmt"
 	"log/slog"
-	"time"
 
 	"github.com/yandzee/config/source"
-	"github.com/yandzee/config/str"
 	"github.com/yandzee/config/transform"
-	"github.com/yandzee/config/transformers"
 )
 
-type Getter struct {
-	Source       source.StringSource
-	ValueResults *[]*ValueResult[any]
+type Getter[T any] struct {
+	Target       *T
+	Configurator *Configurator
+	Transformers []transform.Transformer
+	Defaulter    Defaulter[T]
 }
 
-func (g *Getter) Int(trs ...transform.Transformer) int {
-	return NewGetterUnpacker[int]().
-		Transformers(trs...).
-		Transformers(transformers.Parse(str.DefaultParser.Int)).
-		Unwrap(g)
+func (g *Getter[T]) Pre(trs ...transform.Transformer) *Getter[T] {
+	g.Transformers = append(g.Transformers, trs...)
+	return g
 }
 
-func (g *Getter) IntOr(def int, trs ...transform.Transformer) int {
-	return NewGetterUnpacker[int]().
-		Default(def).
-		Transformers(trs...).
-		Transformers(transformers.Parse(str.DefaultParser.Int)).
-		Unwrap(g)
+func (g *Getter[T]) Default(def T) *Getter[T] {
+	return g.DefaultFn(func() (T, error) {
+		return def, nil
+	})
 }
 
-func (g *Getter) IntOrFn(fn Defaulter[int], trs ...transform.Transformer) int {
-	return NewGetterUnpacker[int]().
-		DefaultFn(fn).
-		Transformers(trs...).
-		Transformers(transformers.Parse(str.DefaultParser.Int)).
-		Unwrap(g)
+func (g *Getter[T]) DefaultFn(fn Defaulter[T]) *Getter[T] {
+	g.Defaulter = fn
+	return g
 }
 
-func (g *Getter) Int8(trs ...transform.Transformer) int8 {
-	return NewGetterUnpacker[int8]().
-		Transformers(trs...).
-		Transformers(transformers.Parse(str.DefaultParser.Int8)).
-		Unwrap(g)
+func (g *Getter[T]) Env(envVar string) T {
+	return g.From(&source.EnvVarSource{
+		VarName: envVar,
+	})
 }
 
-func (g *Getter) Int8Or(def int8, trs ...transform.Transformer) int8 {
-	return NewGetterUnpacker[int8]().
-		Default(def).
-		Transformers(trs...).
-		Transformers(transformers.Parse(str.DefaultParser.Int8)).
-		Unwrap(g)
+func (g *Getter[T]) EnvOr(envVar string, def T) T {
+	return g.From(&source.EnvVarSource{
+		VarName: envVar,
+	}, func() (T, error) {
+		return def, nil
+	})
 }
 
-func (g *Getter) Int8OrFn(fn Defaulter[int8], trs ...transform.Transformer) int8 {
-	return NewGetterUnpacker[int8]().
-		DefaultFn(fn).
-		Transformers(trs...).
-		Transformers(transformers.Parse(str.DefaultParser.Int8)).
-		Unwrap(g)
+func (g *Getter[T]) EnvOrFn(envVar string, defFn Defaulter[T]) T {
+	return g.From(&source.EnvVarSource{
+		VarName: envVar,
+	}, defFn)
 }
 
-func (g *Getter) Int16(trs ...transform.Transformer) int16 {
-	return NewGetterUnpacker[int16]().
-		Transformers(trs...).
-		Transformers(transformers.Parse(str.DefaultParser.Int16)).
-		Unwrap(g)
+func (g *Getter[T]) From(src source.StringSource, def ...Defaulter[T]) T {
+	result := g.TryFrom(src, def...)
+
+	if g.Configurator == nil {
+		lvl, msg := result.LevelAndMessage()
+
+		if lvl == slog.LevelError {
+			panic(fmt.Sprintf("%s: %s\n", src.Name(), msg))
+		}
+	}
+
+	return result.Value
 }
 
-func (g *Getter) Int16Or(def int16, trs ...transform.Transformer) int16 {
-	return NewGetterUnpacker[int16]().
-		Default(def).
-		Transformers(trs...).
-		Transformers(transformers.Parse(str.DefaultParser.Int16)).
-		Unwrap(g)
+func (g *Getter[T]) TryFrom(src source.StringSource, def ...Defaulter[T]) *ValueResult[T] {
+	str, presented, err := src.Lookup()
+
+	result := &ValueResult[T]{
+		Source: src,
+		Error:  err,
+	}
+
+	if err != nil {
+		result.Flags.Add(DescFlagLookupError)
+		g.saveResult(result)
+
+		return result
+	}
+
+	state := &UnpackState{
+		IsInitialized: presented,
+	}
+
+	defaulter := g.getDefaulter(def...)
+	if defaulter == nil {
+		result.Flags.Add(DescFlagRequired)
+	}
+
+	switch {
+	case presented:
+		result.Flags.Add(DescFlagPresented)
+
+		state.Value = str
+		result.Error = transform.Run(state, g.Transformers)
+
+		if result.Error != nil {
+			result.Flags.Add(DescFlagTransformError)
+		}
+	case defaulter != nil:
+		result.Value, result.Error = defaulter()
+
+		if result.Error != nil {
+			result.Flags.Add(DescFlagCustomError)
+		} else {
+			result.Flags.Add(DescFlagDefaulted)
+		}
+
+		fallthrough
+	default:
+		g.saveResult(result)
+		return result
+	}
+
+	g.saveResult(result)
+	if result.Error != nil {
+		return result
+	}
+	//
+	// if !state.IsInitialized && !state.IsDefaulted {
+	// 	return result
+	// }
+
+	ok := false
+	result.Value, ok = state.Value.(T)
+	if ok {
+		return result
+	}
+
+	result.Flags.Add(DescFlagTransformError)
+	result.Error = errors.Join(
+		transform.ErrConversion,
+		fmt.Errorf(
+			"Failed to cast resulting value %v (%T) to type %T",
+			state.Value,
+			state.Value,
+			result.Value,
+		),
+	)
+
+	return result
 }
 
-func (g *Getter) Int16OrFn(fn Defaulter[int16], trs ...transform.Transformer) int16 {
-	return NewGetterUnpacker[int16]().
-		DefaultFn(fn).
-		Transformers(trs...).
-		Transformers(transformers.Parse(str.DefaultParser.Int16)).
-		Unwrap(g)
+func (g *Getter[T]) saveResult(res *ValueResult[T]) {
+	if g.Configurator != nil {
+		g.Configurator.ValueResults = append(g.Configurator.ValueResults, res.Any())
+	}
+
+	if g.Target != nil {
+		*g.Target = res.Value
+	}
 }
 
-func (g *Getter) Int32(trs ...transform.Transformer) int32 {
-	return NewGetterUnpacker[int32]().
-		Transformers(trs...).
-		Transformers(transformers.Parse(str.DefaultParser.Int32)).
-		Unwrap(g)
-}
+func (g *Getter[T]) getDefaulter(def ...Defaulter[T]) Defaulter[T] {
+	if g.Defaulter != nil {
+		return g.Defaulter
+	}
 
-func (g *Getter) Int32Or(def int32, trs ...transform.Transformer) int32 {
-	return NewGetterUnpacker[int32]().
-		Default(def).
-		Transformers(trs...).
-		Transformers(transformers.Parse(str.DefaultParser.Int32)).
-		Unwrap(g)
-}
+	for _, defFn := range def {
+		if defFn != nil {
+			return defFn
+		}
+	}
 
-func (g *Getter) Int32OrFn(fn Defaulter[int32], trs ...transform.Transformer) int32 {
-	return NewGetterUnpacker[int32]().
-		DefaultFn(fn).
-		Transformers(trs...).
-		Transformers(transformers.Parse(str.DefaultParser.Int32)).
-		Unwrap(g)
-}
-
-func (g *Getter) Int64(trs ...transform.Transformer) int64 {
-	return NewGetterUnpacker[int64]().
-		Transformers(trs...).
-		Transformers(transformers.Parse(str.DefaultParser.Int64)).
-		Unwrap(g)
-}
-
-func (g *Getter) Int64Or(def int64, trs ...transform.Transformer) int64 {
-	return NewGetterUnpacker[int64]().
-		Default(def).
-		Transformers(trs...).
-		Transformers(transformers.Parse(str.DefaultParser.Int64)).
-		Unwrap(g)
-}
-
-func (g *Getter) Int64OrFn(fn Defaulter[int64], trs ...transform.Transformer) int64 {
-	return NewGetterUnpacker[int64]().
-		DefaultFn(fn).
-		Transformers(trs...).
-		Transformers(transformers.Parse(str.DefaultParser.Int64)).
-		Unwrap(g)
-}
-
-func (g *Getter) Uint(trs ...transform.Transformer) uint {
-	return NewGetterUnpacker[uint]().
-		Transformers(trs...).
-		Transformers(transformers.Parse(str.DefaultParser.Uint)).
-		Unwrap(g)
-}
-
-func (g *Getter) UintOr(def uint, trs ...transform.Transformer) uint {
-	return NewGetterUnpacker[uint]().
-		Default(def).
-		Transformers(trs...).
-		Transformers(transformers.Parse(str.DefaultParser.Uint)).
-		Unwrap(g)
-}
-
-func (g *Getter) UintOrFn(fn Defaulter[uint], trs ...transform.Transformer) uint {
-	return NewGetterUnpacker[uint]().
-		DefaultFn(fn).
-		Transformers(trs...).
-		Transformers(transformers.Parse(str.DefaultParser.Uint)).
-		Unwrap(g)
-}
-
-func (g *Getter) Uint8(trs ...transform.Transformer) uint8 {
-	return NewGetterUnpacker[uint8]().
-		Transformers(trs...).
-		Transformers(transformers.Parse(str.DefaultParser.Uint8)).
-		Unwrap(g)
-}
-
-func (g *Getter) Uint8Or(def uint8, trs ...transform.Transformer) uint8 {
-	return NewGetterUnpacker[uint8]().
-		Default(def).
-		Transformers(trs...).
-		Transformers(transformers.Parse(str.DefaultParser.Uint8)).
-		Unwrap(g)
-}
-
-func (g *Getter) Uint8OrFn(fn Defaulter[uint8], trs ...transform.Transformer) uint8 {
-	return NewGetterUnpacker[uint8]().
-		DefaultFn(fn).
-		Transformers(trs...).
-		Transformers(transformers.Parse(str.DefaultParser.Uint8)).
-		Unwrap(g)
-}
-
-func (g *Getter) Uint16(trs ...transform.Transformer) uint16 {
-	return NewGetterUnpacker[uint16]().
-		Transformers(trs...).
-		Transformers(transformers.Parse(str.DefaultParser.Uint16)).
-		Unwrap(g)
-}
-
-func (g *Getter) Uint16Or(def uint16, trs ...transform.Transformer) uint16 {
-	return NewGetterUnpacker[uint16]().
-		Default(def).
-		Transformers(trs...).
-		Transformers(transformers.Parse(str.DefaultParser.Uint16)).
-		Unwrap(g)
-}
-
-func (g *Getter) Uint16OrFn(fn Defaulter[uint16], trs ...transform.Transformer) uint16 {
-	return NewGetterUnpacker[uint16]().
-		DefaultFn(fn).
-		Transformers(trs...).
-		Transformers(transformers.Parse(str.DefaultParser.Uint16)).
-		Unwrap(g)
-}
-
-func (g *Getter) Uint32(trs ...transform.Transformer) uint32 {
-	return NewGetterUnpacker[uint32]().
-		Transformers(trs...).
-		Transformers(transformers.Parse(str.DefaultParser.Uint32)).
-		Unwrap(g)
-}
-
-func (g *Getter) Uint32Or(def uint32, trs ...transform.Transformer) uint32 {
-	return NewGetterUnpacker[uint32]().
-		Default(def).
-		Transformers(trs...).
-		Transformers(transformers.Parse(str.DefaultParser.Uint32)).
-		Unwrap(g)
-}
-
-func (g *Getter) Uint32OrFn(fn Defaulter[uint32], trs ...transform.Transformer) uint32 {
-	return NewGetterUnpacker[uint32]().
-		DefaultFn(fn).
-		Transformers(trs...).
-		Transformers(transformers.Parse(str.DefaultParser.Uint32)).
-		Unwrap(g)
-}
-
-func (g *Getter) Uint64(trs ...transform.Transformer) uint64 {
-	return NewGetterUnpacker[uint64]().
-		Transformers(trs...).
-		Transformers(transformers.Parse(str.DefaultParser.Uint64)).
-		Unwrap(g)
-}
-
-func (g *Getter) Uint64Or(def uint64, trs ...transform.Transformer) uint64 {
-	return NewGetterUnpacker[uint64]().
-		Default(def).
-		Transformers(trs...).
-		Transformers(transformers.Parse(str.DefaultParser.Uint64)).
-		Unwrap(g)
-}
-
-func (g *Getter) Uint64OrFn(fn Defaulter[uint64], trs ...transform.Transformer) uint64 {
-	return NewGetterUnpacker[uint64]().
-		DefaultFn(fn).
-		Transformers(trs...).
-		Transformers(transformers.Parse(str.DefaultParser.Uint64)).
-		Unwrap(g)
-}
-
-func (g *Getter) Float32(trs ...transform.Transformer) float32 {
-	return NewGetterUnpacker[float32]().
-		Transformers(trs...).
-		Transformers(transformers.Parse(str.DefaultParser.Float32)).
-		Unwrap(g)
-}
-
-func (g *Getter) Float32Or(def float32, trs ...transform.Transformer) float32 {
-	return NewGetterUnpacker[float32]().
-		Default(def).
-		Transformers(trs...).
-		Transformers(transformers.Parse(str.DefaultParser.Float32)).
-		Unwrap(g)
-}
-
-func (g *Getter) Float32OrFn(fn Defaulter[float32], trs ...transform.Transformer) float32 {
-	return NewGetterUnpacker[float32]().
-		DefaultFn(fn).
-		Transformers(trs...).
-		Transformers(transformers.Parse(str.DefaultParser.Float32)).
-		Unwrap(g)
-}
-
-func (g *Getter) Float64(trs ...transform.Transformer) float64 {
-	return NewGetterUnpacker[float64]().
-		Transformers(trs...).
-		Transformers(transformers.Parse(str.DefaultParser.Float64)).
-		Unwrap(g)
-}
-
-func (g *Getter) Float64Or(def float64, trs ...transform.Transformer) float64 {
-	return NewGetterUnpacker[float64]().
-		Default(def).
-		Transformers(trs...).
-		Transformers(transformers.Parse(str.DefaultParser.Float64)).
-		Unwrap(g)
-}
-
-func (g *Getter) Float64OrFn(fn Defaulter[float64], trs ...transform.Transformer) float64 {
-	return NewGetterUnpacker[float64]().
-		DefaultFn(fn).
-		Transformers(trs...).
-		Transformers(transformers.Parse(str.DefaultParser.Float64)).
-		Unwrap(g)
-}
-
-func (g *Getter) Bool(trs ...transform.Transformer) bool {
-	return NewGetterUnpacker[bool]().
-		Transformers(trs...).
-		Transformers(transformers.Parse(str.DefaultParser.Bool)).
-		Unwrap(g)
-}
-
-func (g *Getter) BoolOr(def bool, trs ...transform.Transformer) bool {
-	return NewGetterUnpacker[bool]().
-		Default(def).
-		Transformers(trs...).
-		Transformers(transformers.Parse(str.DefaultParser.Bool)).
-		Unwrap(g)
-}
-
-func (g *Getter) BoolOrFn(fn Defaulter[bool], trs ...transform.Transformer) bool {
-	return NewGetterUnpacker[bool]().
-		DefaultFn(fn).
-		Transformers(trs...).
-		Transformers(transformers.Parse(str.DefaultParser.Bool)).
-		Unwrap(g)
-}
-
-func (g *Getter) Bytes(trs ...transform.Transformer) []byte {
-	return NewGetterUnpacker[[]byte]().
-		Transformers(trs...).
-		Transformers(transformers.ToBytes).
-		Unwrap(g)
-}
-
-func (g *Getter) BytesOr(def []byte, trs ...transform.Transformer) []byte {
-	return NewGetterUnpacker[[]byte]().
-		Default(def).
-		Transformers(trs...).
-		Transformers(transformers.ToBytes).
-		Unwrap(g)
-}
-
-func (g *Getter) BytesOrFn(fn Defaulter[[]byte], trs ...transform.Transformer) []byte {
-	return NewGetterUnpacker[[]byte]().
-		DefaultFn(fn).
-		Transformers(trs...).
-		Transformers(transformers.ToBytes).
-		Unwrap(g)
-}
-
-func (g *Getter) Duration(trs ...transform.Transformer) time.Duration {
-	return NewGetterUnpacker[time.Duration]().
-		Transformers(trs...).
-		Transformers(transformers.Parse(str.DefaultParser.Duration)).
-		Unwrap(g)
-}
-
-func (g *Getter) DurationOr(def time.Duration, trs ...transform.Transformer) time.Duration {
-	return NewGetterUnpacker[time.Duration]().
-		Default(def).
-		Transformers(trs...).
-		Transformers(transformers.Parse(str.DefaultParser.Duration)).
-		Unwrap(g)
-}
-
-func (g *Getter) DurationOrFn(fn Defaulter[time.Duration], trs ...transform.Transformer) time.Duration {
-	return NewGetterUnpacker[time.Duration]().
-		DefaultFn(fn).
-		Transformers(trs...).
-		Transformers(transformers.Parse(str.DefaultParser.Duration)).
-		Unwrap(g)
-}
-
-func (g *Getter) SlogLevel(trs ...transform.Transformer) slog.Level {
-	return NewGetterUnpacker[slog.Level]().
-		Transformers(trs...).
-		Transformers(transformers.Parse(str.DefaultParser.SlogLevel)).
-		Unwrap(g)
-}
-
-func (g *Getter) SlogLevelOr(def slog.Level, trs ...transform.Transformer) slog.Level {
-	return NewGetterUnpacker[slog.Level]().
-		Default(def).
-		Transformers(trs...).
-		Transformers(transformers.Parse(str.DefaultParser.SlogLevel)).
-		Unwrap(g)
-}
-
-func (g *Getter) SlogLevelOrFn(fn Defaulter[slog.Level], trs ...transform.Transformer) slog.Level {
-	return NewGetterUnpacker[slog.Level]().
-		DefaultFn(fn).
-		Transformers(trs...).
-		Transformers(transformers.Parse(str.DefaultParser.SlogLevel)).
-		Unwrap(g)
-}
-
-func (g *Getter) Strings(separators ...string) []string {
-	return NewGetterUnpacker[[]string]().
-		Transformers(transformers.Split(separators...)).
-		Unwrap(g)
-}
-
-func (g *Getter) StringsOr(def []string, separators ...string) []string {
-	return NewGetterUnpacker[[]string]().
-		Default(def).
-		Transformers(transformers.Split(separators...)).
-		Unwrap(g)
-}
-
-func (g *Getter) StringsOrFn(fn Defaulter[[]string], separators ...string) []string {
-	return NewGetterUnpacker[[]string]().
-		DefaultFn(fn).
-		Transformers(transformers.Split(separators...)).
-		Unwrap(g)
-}
-
-func (g *Getter) String(trs ...transform.Transformer) string {
-	return NewGetterUnpacker[string]().
-		Transformers(trs...).
-		Unwrap(g)
-}
-
-func (g *Getter) StringOr(def string, trs ...transform.Transformer) string {
-	return NewGetterUnpacker[string]().
-		Default(def).
-		Transformers(trs...).
-		Unwrap(g)
-}
-
-func (g *Getter) StringOrFn(fn Defaulter[string], trs ...transform.Transformer) string {
-	return NewGetterUnpacker[string]().
-		DefaultFn(fn).
-		Transformers(trs...).
-		Unwrap(g)
-}
-
-func (g *Getter) Any(trs ...transform.Transformer) any {
-	return NewGetterUnpacker[any]().
-		Transformers(trs...).
-		Unwrap(g)
-}
-
-func (g *Getter) AnyOr(def any, trs ...transform.Transformer) any {
-	return NewGetterUnpacker[any]().
-		Default(def).
-		Transformers(trs...).
-		Unwrap(g)
-}
-
-func (g *Getter) AnyOrFn(fn Defaulter[any], trs ...transform.Transformer) any {
-	return NewGetterUnpacker[any]().
-		DefaultFn(fn).
-		Transformers(trs...).
-		Unwrap(g)
+	return nil
 }

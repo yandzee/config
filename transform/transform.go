@@ -23,9 +23,9 @@ type Transformer interface {
 }
 
 type StateFn = func(State) error
-type MapFromToFn[F, T any] = func(F) (T, error)
+// type MapFromToFn[F, T any] func(F) (T, error)
 
-func Map[F, T any](fn MapFromToFn[F, T]) Transformer {
+func Map[F, T any](fn func(F) (T, error)) Transformer {
 	return StateTransform(func(state State) error {
 		stateValue, err := state.GetValue()
 
