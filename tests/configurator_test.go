@@ -32,10 +32,7 @@ func TestConfigurator(t *testing.T) {
 	runConfiguratorTests(t, []ConfiguratorTest[string]{
 		{
 			Action: func(cfg *configurator.Configurator) {
-				config.
-					Int(cfg).
-					Checks().
-					From(NewStr("4201", nil, true))
+				config.Int().SetConfigurator(cfg).From(NewStr("4201", nil, true))
 			},
 			ExpectedResults: []ExpectedResult{
 				{
@@ -48,7 +45,7 @@ func TestConfigurator(t *testing.T) {
 		},
 		{
 			Action: func(cfg *configurator.Configurator) {
-				config.Int(cfg).From(NewStr("4202", nil, false))
+				config.Int().SetConfigurator(cfg).From(NewStr("4202", nil, false))
 			},
 			ExpectedResults: []ExpectedResult{
 				{
@@ -61,7 +58,7 @@ func TestConfigurator(t *testing.T) {
 		},
 		{
 			Action: func(cfg *configurator.Configurator) {
-				config.Int(cfg).From(NewStr("4203", ErrTest1, true))
+				config.Int().SetConfigurator(cfg).From(NewStr("4203", ErrTest1, true))
 			},
 			ExpectedResults: []ExpectedResult{
 				{
@@ -74,7 +71,7 @@ func TestConfigurator(t *testing.T) {
 		},
 		{
 			Action: func(cfg *configurator.Configurator) {
-				config.Int(cfg).From(NewStr("4204", ErrTest2, false))
+				config.Int().SetConfigurator(cfg).From(NewStr("4204", ErrTest2, false))
 			},
 			ExpectedResults: []ExpectedResult{
 				{
@@ -87,7 +84,7 @@ func TestConfigurator(t *testing.T) {
 		},
 		{
 			Action: func(cfg *configurator.Configurator) {
-				config.Int(cfg).From(NewStr("s4205", nil, true))
+				config.Int().SetConfigurator(cfg).From(NewStr("s4205", nil, true))
 			},
 			ExpectedResults: []ExpectedResult{
 				{
@@ -100,7 +97,7 @@ func TestConfigurator(t *testing.T) {
 		},
 		{
 			Action: func(cfg *configurator.Configurator) {
-				config.Int(cfg).FromOr(NewStr("4206", nil, true), 4207)
+				config.Int().SetConfigurator(cfg).FromOr(NewStr("4206", nil, true), 4207)
 			},
 			ExpectedResults: []ExpectedResult{
 				{
@@ -113,7 +110,7 @@ func TestConfigurator(t *testing.T) {
 		},
 		{
 			Action: func(cfg *configurator.Configurator) {
-				config.Int(cfg).FromOr(NewStr("4207", nil, false), 4208)
+				config.Int().SetConfigurator(cfg).FromOr(NewStr("4207", nil, false), 4208)
 			},
 			ExpectedResults: []ExpectedResult{
 				{
@@ -126,7 +123,7 @@ func TestConfigurator(t *testing.T) {
 		},
 		{
 			Action: func(cfg *configurator.Configurator) {
-				config.Int(cfg).FromOr(NewStr("4208", ErrTest1, true), 4209)
+				config.Int().SetConfigurator(cfg).FromOr(NewStr("4208", ErrTest1, true), 4209)
 			},
 			ExpectedResults: []ExpectedResult{
 				{
@@ -139,7 +136,7 @@ func TestConfigurator(t *testing.T) {
 		},
 		{
 			Action: func(cfg *configurator.Configurator) {
-				config.Int(cfg).FromOr(NewStr("4209", ErrTest2, false), 4210)
+				config.Int().SetConfigurator(cfg).FromOr(NewStr("4209", ErrTest2, false), 4210)
 			},
 			ExpectedResults: []ExpectedResult{
 				{
@@ -152,7 +149,7 @@ func TestConfigurator(t *testing.T) {
 		},
 		{
 			Action: func(cfg *configurator.Configurator) {
-				config.Int(cfg).From(NewStr("4210", nil, true), func() (int, error) {
+				config.Int().SetConfigurator(cfg).From(NewStr("4210", nil, true), func() (int, error) {
 					return 4211, nil
 				})
 			},
@@ -167,7 +164,7 @@ func TestConfigurator(t *testing.T) {
 		},
 		{
 			Action: func(cfg *configurator.Configurator) {
-				config.Int(cfg).From(NewStr("4211", nil, false), func() (int, error) {
+				config.Int().SetConfigurator(cfg).From(NewStr("4211", nil, false), func() (int, error) {
 					return 4212, nil
 				})
 			},
@@ -182,7 +179,7 @@ func TestConfigurator(t *testing.T) {
 		},
 		{
 			Action: func(cfg *configurator.Configurator) {
-				config.Int(cfg).From(NewStr("4212", ErrTest1, true), func() (int, error) {
+				config.Int().SetConfigurator(cfg).From(NewStr("4212", ErrTest1, true), func() (int, error) {
 					return 4213, nil
 				})
 			},
@@ -197,7 +194,7 @@ func TestConfigurator(t *testing.T) {
 		},
 		{
 			Action: func(cfg *configurator.Configurator) {
-				config.Int(cfg).From(NewStr("4213", ErrTest2, false), func() (int, error) {
+				config.Int().SetConfigurator(cfg).From(NewStr("4213", ErrTest2, false), func() (int, error) {
 					return 4214, nil
 				})
 			},
@@ -212,7 +209,7 @@ func TestConfigurator(t *testing.T) {
 		},
 		{
 			Action: func(cfg *configurator.Configurator) {
-				config.Int(cfg).From(NewStr("4214", nil, false), func() (int, error) {
+				config.Int().SetConfigurator(cfg).From(NewStr("4214", nil, false), func() (int, error) {
 					return 4215, ErrTest1
 				})
 			},

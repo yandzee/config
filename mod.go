@@ -12,8 +12,8 @@ import (
 
 var Default = &c.Configurator{}
 
-func Set[T any](target *T, cfgrs ...*c.Configurator) *c.Getter[T] {
-	g := defaultGetter[T](cfgrs...)
+func Set[T any](target *T, opts ...any) *c.Getter[T] {
+	g := defaultGetter[T]()
 	g.Target = target
 
 	switch any(target).(type) {
@@ -47,6 +47,9 @@ func Set[T any](target *T, cfgrs ...*c.Configurator) *c.Getter[T] {
 		g.Post(transformers.Parse(str.DefaultParser.Complex128))
 	case *bool:
 		g.Post(transformers.Parse(str.DefaultParser.Bool))
+	case *[]string:
+		seps := transformers.CoerceOptions[string](opts)
+		g.Post(transformers.Split(seps...))
 	case *time.Duration:
 		g.Post(transformers.Parse(str.DefaultParser.Duration))
 	case *slog.Level:
@@ -56,92 +59,85 @@ func Set[T any](target *T, cfgrs ...*c.Configurator) *c.Getter[T] {
 	return g
 }
 
-func Int(cfgrs ...*c.Configurator) *c.Getter[int] {
-	return Set[int](nil, cfgrs...)
+func Int() *c.Getter[int] {
+	return Set[int](nil)
 }
 
-func Int8(cfgrs ...*c.Configurator) *c.Getter[int8] {
-	return Set[int8](nil, cfgrs...)
+func Int8() *c.Getter[int8] {
+	return Set[int8](nil)
 }
 
-func Int16(cfgrs ...*c.Configurator) *c.Getter[int16] {
-	return Set[int16](nil, cfgrs...)
+func Int16() *c.Getter[int16] {
+	return Set[int16](nil)
 }
 
-func Int32(cfgrs ...*c.Configurator) *c.Getter[int32] {
-	return Set[int32](nil, cfgrs...)
+func Int32() *c.Getter[int32] {
+	return Set[int32](nil)
 }
 
-func Int64(cfgrs ...*c.Configurator) *c.Getter[int64] {
-	return Set[int64](nil, cfgrs...)
+func Int64() *c.Getter[int64] {
+	return Set[int64](nil)
 }
 
-func Uint(cfgrs ...*c.Configurator) *c.Getter[uint] {
-	return Set[uint](nil, cfgrs...)
+func Uint() *c.Getter[uint] {
+	return Set[uint](nil)
 }
 
-func Uint8(cfgrs ...*c.Configurator) *c.Getter[uint8] {
-	return Set[uint8](nil, cfgrs...)
+func Uint8() *c.Getter[uint8] {
+	return Set[uint8](nil)
 }
 
-func Uint16(cfgrs ...*c.Configurator) *c.Getter[uint16] {
-	return Set[uint16](nil, cfgrs...)
+func Uint16() *c.Getter[uint16] {
+	return Set[uint16](nil)
 }
 
-func Uint32(cfgrs ...*c.Configurator) *c.Getter[uint32] {
-	return Set[uint32](nil, cfgrs...)
+func Uint32() *c.Getter[uint32] {
+	return Set[uint32](nil)
 }
 
-func Uint64(cfgrs ...*c.Configurator) *c.Getter[uint64] {
-	return Set[uint64](nil, cfgrs...)
+func Uint64() *c.Getter[uint64] {
+	return Set[uint64](nil)
 }
 
-func Float32(cfgrs ...*c.Configurator) *c.Getter[float32] {
-	return Set[float32](nil, cfgrs...)
+func Float32() *c.Getter[float32] {
+	return Set[float32](nil)
 }
 
-func Float64(cfgrs ...*c.Configurator) *c.Getter[float64] {
-	return Set[float64](nil, cfgrs...)
+func Float64() *c.Getter[float64] {
+	return Set[float64](nil)
 }
 
-func Complex64(cfgrs ...*c.Configurator) *c.Getter[complex64] {
-	return Set[complex64](nil, cfgrs...)
+func Complex64() *c.Getter[complex64] {
+	return Set[complex64](nil)
 }
 
-func Complex128(cfgrs ...*c.Configurator) *c.Getter[complex128] {
-	return Set[complex128](nil, cfgrs...)
+func Complex128() *c.Getter[complex128] {
+	return Set[complex128](nil)
 }
 
-func Bool(cfgrs ...*c.Configurator) *c.Getter[bool] {
-	return Set[bool](nil, cfgrs...)
+func Bool() *c.Getter[bool] {
+	return Set[bool](nil)
 }
 
-func Duration(cfgrs ...*c.Configurator) *c.Getter[time.Duration] {
-	return Set[time.Duration](nil, cfgrs...)
+func Duration() *c.Getter[time.Duration] {
+	return Set[time.Duration](nil)
 }
 
-func SlogLevel(cfgrs ...*c.Configurator) *c.Getter[slog.Level] {
-	return Set[slog.Level](nil, cfgrs...)
+func SlogLevel() *c.Getter[slog.Level] {
+	return Set[slog.Level](nil)
+}
+
+func Strings(seps ...any) *c.Getter[[]string] {
+	return Set[[]string](nil, seps...)
 }
 
 func Clear() {
 	Default.Clear()
 }
 
-func defaultGetter[T any](cfgrs ...*c.Configurator) *c.Getter[T] {
-	configurator := Default
-
-	for _, cfgr := range cfgrs {
-		if cfgr == nil {
-			continue
-		}
-
-		configurator = cfgr
-		break
-	}
-
+func defaultGetter[T any]() *c.Getter[T] {
 	return &c.Getter[T]{
-		Configurator: configurator,
+		Configurator: Default,
 		Transformers: []transform.Transformer{},
 	}
 }

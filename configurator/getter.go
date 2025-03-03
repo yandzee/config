@@ -41,6 +41,11 @@ func (g *Getter[T]) DefaultFn(fn Defaulter[T]) *Getter[T] {
 	return g
 }
 
+func (g *Getter[T]) SetConfigurator(cfg *Configurator) *Getter[T] {
+	g.Configurator = cfg
+	return g
+}
+
 func (g *Getter[T]) Env(envVar string) T {
 	return g.From(&source.EnvVarSource{
 		VarName: envVar,
