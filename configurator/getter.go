@@ -6,6 +6,7 @@ import (
 	"log/slog"
 
 	"github.com/yandzee/config/check"
+	"github.com/yandzee/config/checkers"
 	"github.com/yandzee/config/source"
 	"github.com/yandzee/config/transform"
 )
@@ -180,6 +181,11 @@ func (g *Getter[T]) TryFrom(src source.StringSource, def ...Defaulter[T]) *Value
 
 func (g *Getter[T]) Checks(chkrs ...check.Checker[T]) *Getter[T] {
 	g.Checkers = append(g.Checkers, chkrs...)
+	return g
+}
+
+func (g *Getter[T]) Check(fn func(T) (bool, string)) *Getter[T] {
+	g.Checkers = append(g.Checkers, checkers.Fn(fn))
 	return g
 }
 
