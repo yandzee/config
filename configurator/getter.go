@@ -19,6 +19,11 @@ type Getter[T any] struct {
 type Defaulter[T any] func() (T, error)
 
 func (g *Getter[T]) Pre(trs ...transform.Transformer) *Getter[T] {
+	g.Transformers = append(trs, g.Transformers...)
+	return g
+}
+
+func (g *Getter[T]) Post(trs ...transform.Transformer) *Getter[T] {
 	g.Transformers = append(g.Transformers, trs...)
 	return g
 }
@@ -52,6 +57,12 @@ func (g *Getter[T]) EnvOrFn(envVar string, defFn Defaulter[T]) T {
 	return g.From(&source.EnvVarSource{
 		VarName: envVar,
 	}, defFn)
+}
+
+func (g *Getter[T]) FromOr(src source.StringSource, def T) T {
+	return g.From(src, func() (T, error) {
+		return def, nil
+	})
 }
 
 func (g *Getter[T]) From(src source.StringSource, def ...Defaulter[T]) T {

@@ -1,7 +1,5 @@
 package tests
 
-import "github.com/yandzee/config/configurator"
-
 type StrSource struct {
 	Str       string
 	Presented bool
@@ -26,13 +24,4 @@ func (ss *StrSource) Name() string {
 
 func (ss *StrSource) Kind() string {
 	return "str"
-}
-
-func Str[T any](
-	c *configurator.Configurator,
-	str string,
-	err error,
-	ok ...bool,
-) *configurator.Getter[T] {
-	return c.Source(NewStr(str, err, ok...))
 }

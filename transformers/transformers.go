@@ -52,6 +52,18 @@ var (
 			return hex.DecodeString(strings.TrimPrefix(hexstr, "0x"))
 		}),
 	)
+
+	ToLower = ToString.Chain(
+		transform.Map(func(v string) (string, error) {
+			return strings.ToLower(v), nil
+		}),
+	)
+
+	ToUpper = ToString.Chain(
+		transform.Map(func(v string) (string, error) {
+			return strings.ToUpper(v), nil
+		}),
+	)
 )
 
 func Parse[T any](fn str.ParseFn[T]) transform.Transformer {
