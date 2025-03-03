@@ -1,7 +1,9 @@
 package check
 
+import "github.com/yandzee/config/result"
+
 type Checker[T any] interface {
-	Check(v T) (bool, string)
+	Check(r *result.Result[T]) (bool, string)
 }
 
 func Run[T any](chkrs ...Checker[T]) bool {

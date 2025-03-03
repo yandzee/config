@@ -7,11 +7,10 @@ import (
 
 	"github.com/yandzee/config/check"
 	"github.com/yandzee/config/checkers"
+	"github.com/yandzee/config/result"
 	"github.com/yandzee/config/source"
 	"github.com/yandzee/config/transform"
 )
-
-var ErrCheck = errors.New("Check failed")
 
 type Getter[T any] struct {
 	Target       *T
@@ -89,19 +88,19 @@ func (g *Getter[T]) From(src source.StringSource, def ...Defaulter[T]) T {
 	return result.Value
 }
 
-func (g *Getter[T]) TryFrom(src source.StringSource, def ...Defaulter[T]) *ValueResult[T] {
+func (g *Getter[T]) TryFrom(src source.StringSource, def ...Defaulter[T]) *result.Result[T] {
 	str, presented, err := src.Lookup()
 
-	result := &ValueResult[T]{
+	res := &result.Result[T]{
 		Source: src,
 		Error:  err,
 	}
 
 	if err != nil {
-		result.Flags.Add(DescFlagLookupError)
-		g.saveResult(result)
+		res.Flags.Add(result.FlagLookupError)
+		g.saveResult(res)
 
-		return result
+		return res
 	}
 
 	state := &UnpackState{
@@ -110,78 +109,68 @@ func (g *Getter[T]) TryFrom(src source.StringSource, def ...Defaulter[T]) *Value
 
 	defaulter := g.getDefaulter(def...)
 	if defaulter == nil {
-		result.Flags.Add(DescFlagRequired)
+		res.Flags.Add(result.FlagRequired)
 	}
 
 	switch {
 	case presented:
-		result.Flags.Add(DescFlagPresented)
+		res.Flags.Add(result.FlagPresented)
 
 		state.Value = str
-		result.Error = transform.Run(state, g.Transformers)
+		res.Error = transform.Run(state, g.Transformers)
 
-		if result.Error != nil {
-			result.Flags.Add(DescFlagTransformError)
+		if res.Error != nil {
+			res.Flags.Add(result.FlagTransformError)
 			break
 		}
 	case defaulter != nil:
 		var val T
-		val, result.Error = defaulter()
+		val, res.Error = defaulter()
 
-		if result.Error != nil {
-			result.Flags.Add(DescFlagCustomError)
+		if res.Error != nil {
+			res.Flags.Add(result.FlagCustomError)
 		} else {
-			result.Flags.Add(DescFlagDefaulted)
-			result.Value = val
+			res.Flags.Add(result.FlagDefaulted)
+			res.Value = val
 		}
-
-		fallthrough
-	default:
-		g.saveResult(result)
-		return result
 	}
 
-	if result.Error != nil {
-		g.saveResult(result)
-		return result
+	if res.Error != nil {
+		g.saveResult(res)
+		return res
 	}
 
-	ok := false
-	result.Value, ok = state.Value.(T)
-	if !ok {
-		result.Flags.Add(DescFlagTransformError)
-		result.Error = errors.Join(
-			transform.ErrConversion,
-			fmt.Errorf(
-				"Failed to coerce resulting value %v (%T) to type %T",
-				state.Value,
-				state.Value,
-				result.Value,
-			),
-		)
+	if state.IsInitialized {
+		ok := false
+		res.Value, ok = state.Value.(T)
 
-		g.saveResult(result)
-		return result
-	}
-
-	checked := true
-	for _, checker := range g.Checkers {
-		res, desc := checker.Check(result.Value)
-		checked = checked && res
-
-		if !checked {
-			result.Flags.Add(DescFlagCheckFailed)
-			result.Error = errors.Join(
-				ErrCheck,
-				fmt.Errorf("%s", desc),
+		if !ok {
+			res.Flags.Add(result.FlagTransformError)
+			res.Error = errors.Join(
+				transform.ErrConversion,
+				fmt.Errorf(
+					"Failed to coerce resulting value %v (%T) to type %T",
+					state.Value,
+					state.Value,
+					res.Value,
+				),
 			)
+		}
+	}
+
+	for _, checker := range g.Checkers {
+		ok, desc := checker.Check(res)
+
+		if !ok {
+			res.Flags.Add(result.FlagCheckFailed)
+			res.Error = fmt.Errorf("%s", desc)
 
 			break
 		}
 	}
 
-	g.saveResult(result)
-	return result
+	g.saveResult(res)
+	return res
 }
 
 func (g *Getter[T]) Checks(chkrs ...check.Checker[T]) *Getter[T] {
@@ -189,14 +178,14 @@ func (g *Getter[T]) Checks(chkrs ...check.Checker[T]) *Getter[T] {
 	return g
 }
 
-func (g *Getter[T]) Check(fn func(T) (bool, string)) *Getter[T] {
+func (g *Getter[T]) Check(fn func(*result.Result[T]) (bool, string)) *Getter[T] {
 	g.Checkers = append(g.Checkers, checkers.Fn(fn))
 	return g
 }
 
-func (g *Getter[T]) saveResult(res *ValueResult[T]) {
+func (g *Getter[T]) saveResult(res *result.Result[T]) {
 	if g.Configurator != nil {
-		g.Configurator.ValueResults = append(g.Configurator.ValueResults, res.Any())
+		g.Configurator.Results = append(g.Configurator.Results, res.Any())
 	}
 
 	if g.Target != nil {

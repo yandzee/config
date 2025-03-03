@@ -1,13 +1,17 @@
 package checkers
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/yandzee/config/result"
+)
 
 type RealNumCheckerWrapper[T RealNum] struct {
 	Underlying RealNumChecker
 }
 
-func (w *RealNumCheckerWrapper[T]) Check(v T) (bool, string) {
-	switch val := any(v).(type) {
+func (w *RealNumCheckerWrapper[T]) Check(r *result.Result[T]) (bool, string) {
+	switch val := any(r.Value).(type) {
 	case int:
 		return w.Underlying.CheckInt(int64(val), 0)
 	case int8:
@@ -34,5 +38,5 @@ func (w *RealNumCheckerWrapper[T]) Check(v T) (bool, string) {
 		return w.Underlying.CheckFloat(val, 64)
 	}
 
-	return false, fmt.Sprintf("RealNumCheckerWrapper: unknown value %v (%T)", v, v)
+	return false, fmt.Sprintf("RealNumCheckerWrapper: unknown value %v (%T)", r.Value, r.Value)
 }

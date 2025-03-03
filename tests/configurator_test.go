@@ -9,6 +9,7 @@ import (
 
 	"github.com/yandzee/config"
 	"github.com/yandzee/config/configurator"
+	"github.com/yandzee/config/result"
 )
 
 var (
@@ -24,7 +25,8 @@ type ConfiguratorTest[T any] struct {
 type ExpectedResult struct {
 	Value    any
 	Error    error
-	Flags    configurator.DescriptorFlag
+	ErrorFn  func(error) bool
+	Flags    result.ResultFlag
 	LogLevel slog.Level
 }
 
@@ -38,7 +40,7 @@ func TestConfigurator(t *testing.T) {
 				{
 					Value:    4201,
 					Error:    nil,
-					Flags:    configurator.DescFlagRequired | configurator.DescFlagPresented,
+					Flags:    result.FlagRequired | result.FlagPresented,
 					LogLevel: slog.LevelInfo,
 				},
 			},
@@ -51,7 +53,7 @@ func TestConfigurator(t *testing.T) {
 				{
 					Value:    0,
 					Error:    nil,
-					Flags:    configurator.DescFlagRequired,
+					Flags:    result.FlagRequired,
 					LogLevel: slog.LevelError,
 				},
 			},
@@ -64,7 +66,7 @@ func TestConfigurator(t *testing.T) {
 				{
 					Value:    0,
 					Error:    ErrTest1,
-					Flags:    configurator.DescFlagLookupError,
+					Flags:    result.FlagLookupError,
 					LogLevel: slog.LevelError,
 				},
 			},
@@ -77,7 +79,7 @@ func TestConfigurator(t *testing.T) {
 				{
 					Value:    0,
 					Error:    ErrTest2,
-					Flags:    configurator.DescFlagLookupError,
+					Flags:    result.FlagLookupError,
 					LogLevel: slog.LevelError,
 				},
 			},
@@ -90,7 +92,7 @@ func TestConfigurator(t *testing.T) {
 				{
 					Value:    0,
 					Error:    strconv.ErrSyntax,
-					Flags:    configurator.DescFlagRequired | configurator.DescFlagPresented | configurator.DescFlagTransformError,
+					Flags:    result.FlagRequired | result.FlagPresented | result.FlagTransformError,
 					LogLevel: slog.LevelError,
 				},
 			},
@@ -103,7 +105,7 @@ func TestConfigurator(t *testing.T) {
 				{
 					Value:    4206,
 					Error:    nil,
-					Flags:    configurator.DescFlagPresented,
+					Flags:    result.FlagPresented,
 					LogLevel: slog.LevelInfo,
 				},
 			},
@@ -116,7 +118,7 @@ func TestConfigurator(t *testing.T) {
 				{
 					Value:    4208,
 					Error:    nil,
-					Flags:    configurator.DescFlagDefaulted,
+					Flags:    result.FlagDefaulted,
 					LogLevel: slog.LevelWarn,
 				},
 			},
@@ -129,7 +131,7 @@ func TestConfigurator(t *testing.T) {
 				{
 					Value:    0,
 					Error:    ErrTest1,
-					Flags:    configurator.DescFlagLookupError,
+					Flags:    result.FlagLookupError,
 					LogLevel: slog.LevelError,
 				},
 			},
@@ -142,7 +144,7 @@ func TestConfigurator(t *testing.T) {
 				{
 					Value:    0,
 					Error:    ErrTest2,
-					Flags:    configurator.DescFlagLookupError,
+					Flags:    result.FlagLookupError,
 					LogLevel: slog.LevelError,
 				},
 			},
@@ -157,7 +159,7 @@ func TestConfigurator(t *testing.T) {
 				{
 					Value:    4210,
 					Error:    nil,
-					Flags:    configurator.DescFlagPresented,
+					Flags:    result.FlagPresented,
 					LogLevel: slog.LevelInfo,
 				},
 			},
@@ -172,7 +174,7 @@ func TestConfigurator(t *testing.T) {
 				{
 					Value:    4212,
 					Error:    nil,
-					Flags:    configurator.DescFlagDefaulted,
+					Flags:    result.FlagDefaulted,
 					LogLevel: slog.LevelWarn,
 				},
 			},
@@ -187,7 +189,7 @@ func TestConfigurator(t *testing.T) {
 				{
 					Value:    0,
 					Error:    ErrTest1,
-					Flags:    configurator.DescFlagLookupError,
+					Flags:    result.FlagLookupError,
 					LogLevel: slog.LevelError,
 				},
 			},
@@ -202,7 +204,7 @@ func TestConfigurator(t *testing.T) {
 				{
 					Value:    0,
 					Error:    ErrTest2,
-					Flags:    configurator.DescFlagLookupError,
+					Flags:    result.FlagLookupError,
 					LogLevel: slog.LevelError,
 				},
 			},
@@ -217,7 +219,7 @@ func TestConfigurator(t *testing.T) {
 				{
 					Value:    0,
 					Error:    ErrTest1,
-					Flags:    configurator.DescFlagCustomError,
+					Flags:    result.FlagCustomError,
 					LogLevel: slog.LevelError,
 				},
 			},
@@ -227,16 +229,18 @@ func TestConfigurator(t *testing.T) {
 				config.
 					Int().
 					SetConfigurator(cfg).
-					Check(func(v int) (bool, string) {
-						return v != 4215, "Test check"
+					Check(func(r *result.Result[int]) (bool, string) {
+						return r.Value != 4215, "Test check"
 					}).
 					From(NewStr("4215", nil, true))
 			},
 			ExpectedResults: []ExpectedResult{
 				{
-					Value:    4215,
-					Error:    configurator.ErrCheck,
-					Flags:    configurator.DescFlagRequired | configurator.DescFlagPresented | configurator.DescFlagCheckFailed,
+					Value: 4215,
+					ErrorFn: func(err error) bool {
+						return err != nil && err.Error() == "Test check"
+					},
+					Flags:    result.FlagRequired | result.FlagPresented | result.FlagCheckFailed,
 					LogLevel: slog.LevelError,
 				},
 			},
@@ -246,8 +250,8 @@ func TestConfigurator(t *testing.T) {
 				config.
 					Int().
 					SetConfigurator(cfg).
-					Check(func(v int) (bool, string) {
-						return v == 4216, "Test check"
+					Check(func(r *result.Result[int]) (bool, string) {
+						return r.Value == 4216, "Test check"
 					}).
 					From(NewStr("4216", nil, true))
 			},
@@ -255,7 +259,7 @@ func TestConfigurator(t *testing.T) {
 				{
 					Value:    4216,
 					Error:    nil,
-					Flags:    configurator.DescFlagRequired | configurator.DescFlagPresented,
+					Flags:    result.FlagRequired | result.FlagPresented,
 					LogLevel: slog.LevelInfo,
 				},
 			},
@@ -270,17 +274,17 @@ func runConfiguratorTests[T any](t *testing.T, tests []ConfiguratorTest[T]) {
 
 			ct.Action(&cfg)
 
-			if expLen := len(ct.ExpectedResults); expLen != len(cfg.ValueResults) {
+			if expLen := len(ct.ExpectedResults); expLen != len(cfg.Results) {
 				t.Fatalf(
 					"Value results amount doesnt match, expected %d, got: %d\n%v\n",
 					expLen,
-					len(cfg.ValueResults),
-					cfg.ValueResults,
+					len(cfg.Results),
+					cfg.Results,
 				)
 			}
 
 			for i, expResult := range ct.ExpectedResults {
-				gotResult := cfg.ValueResults[i]
+				gotResult := cfg.Results[i]
 
 				checkValueResults[T](t, i, &expResult, gotResult)
 			}
@@ -292,15 +296,15 @@ func checkValueResults[T any](
 	t *testing.T,
 	idx int,
 	exp *ExpectedResult,
-	got *configurator.ValueResult[any],
+	got *result.Result[any],
 ) {
 	if exp == nil || got == nil {
-		t.Fatalf("Value result %d: some value results are nil\n", idx)
+		t.Fatalf("Result %d: some value results are nil\n", idx)
 	}
 
 	if exp.Flags != got.Flags {
 		t.Fatalf(
-			"Value result %d: flags are not equal, exp: %s (%v), got: %s (%v), err: %v\n",
+			"Result %d: flags are not equal, exp: %s (%v), got: %s (%v), err: %v\n",
 			idx,
 			exp.Flags,
 			exp.Flags.Pairs(),
@@ -308,12 +312,19 @@ func checkValueResults[T any](
 			got.Flags.Pairs(),
 			got.Error,
 		)
-
 	}
 
-	if !errors.Is(got.Error, exp.Error) {
+	if exp.ErrorFn != nil {
+		if !exp.ErrorFn(got.Error) {
+			t.Fatalf(
+				"Result %d: error check has failed by ErrorFn, error %v\n",
+				idx,
+				got.Error,
+			)
+		}
+	} else if !errors.Is(got.Error, exp.Error) {
 		t.Fatalf(
-			"Value result %d: errors are not equal, exp: %v, got: %v\n",
+			"Result %d: errors are not equal, exp: %v, got: %v\n",
 			idx,
 			exp.Error,
 			got.Error,
@@ -322,7 +333,7 @@ func checkValueResults[T any](
 
 	if exp.Value != got.Value {
 		t.Fatalf(
-			"Value result %d: values are not equal, exp: %v (%T), got: %v (%T)\n",
+			"Result %d: values are not equal, exp: %v (%T), got: %v (%T)\n",
 			idx,
 			exp.Value,
 			exp.Value,
@@ -335,20 +346,20 @@ func checkValueResults[T any](
 	hasValue := false
 
 	logEntry.Attrs(func(a slog.Attr) bool {
-		hasValue = hasValue || a.Key == configurator.LogAttrValue
+		hasValue = hasValue || a.Key == result.LogAttrValue
 		return true
 	})
 
 	if hasValue {
 		t.Fatalf(
-			"Value result %d: log record contains `value` even when not required",
+			"Result %d: log record contains `value` even when not required",
 			idx,
 		)
 	}
 
 	if exp.LogLevel != 0 && exp.LogLevel != logEntry.Level {
 		t.Fatalf(
-			"Value result %d: log record levels are not equal, exp: %v, got: %v\n",
+			"Result %d: log record levels are not equal, exp: %v, got: %v\n",
 			idx,
 			exp.LogLevel,
 			logEntry.Level,

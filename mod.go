@@ -54,6 +54,8 @@ func Set[T any](target *T, opts ...any) *c.Getter[T] {
 		g.Post(transformers.Parse(str.DefaultParser.Duration))
 	case *slog.Level:
 		g.Post(transformers.Parse(str.DefaultParser.SlogLevel))
+	case *[]byte:
+		g.Post(transformers.ToBytes)
 	}
 
 	return g
@@ -127,8 +129,16 @@ func SlogLevel() *c.Getter[slog.Level] {
 	return Set[slog.Level](nil)
 }
 
+func String() *c.Getter[string] {
+	return Set[string](nil)
+}
+
 func Strings(seps ...any) *c.Getter[[]string] {
 	return Set[[]string](nil, seps...)
+}
+
+func Bytes() *c.Getter[[]byte] {
+	return Set[[]byte](nil)
 }
 
 func Clear() {

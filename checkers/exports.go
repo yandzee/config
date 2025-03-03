@@ -4,11 +4,12 @@ import (
 	"fmt"
 
 	"github.com/yandzee/config/check"
+	"github.com/yandzee/config/result"
 )
 
 var (
-	StrNotEmpty = Fn(func(str string) (bool, string) {
-		if len(str) == 0 {
+	StrNotEmpty = Fn(func(r *result.Result[string]) (bool, string) {
+		if len(r.Value) == 0 {
 			return false, "String is empty"
 		}
 
@@ -39,11 +40,11 @@ func IsNegative[T RealNum]() check.Checker[T] {
 }
 
 func StrLength(l int) check.Checker[string] {
-	return Fn(func(str string) (bool, string) {
-		if n := len(str); n != l {
+	return Fn(func(r *result.Result[string]) (bool, string) {
+		if n := len(r.Value); n != l {
 			return false, fmt.Sprintf(
 				"String `%s` has wrong length, expected %d, got: %d",
-				str,
+				r.Value,
 				l,
 				n,
 			)

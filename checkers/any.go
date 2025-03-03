@@ -1,6 +1,9 @@
 package checkers
 
-import "github.com/yandzee/config/check"
+import (
+	"github.com/yandzee/config/check"
+	"github.com/yandzee/config/result"
+)
 
 func AdaptChecker[T any](chckr check.Checker[any]) check.Checker[T] {
 	return &AnyChecker[T]{
@@ -12,6 +15,6 @@ type AnyChecker[T any] struct {
 	Underlying check.Checker[any]
 }
 
-func (ac *AnyChecker[T]) Check(v T) (bool, string) {
-	return ac.Underlying.Check(any(v))
+func (ac *AnyChecker[T]) Check(r *result.Result[T]) (bool, string) {
+	return ac.Underlying.Check(r.Any())
 }
