@@ -149,6 +149,10 @@ func Clear() {
 	Default.Clear()
 }
 
+func LogRecords(opts ...c.LogOption) []slog.Record {
+	return Default.LogRecords(opts...)
+}
+
 func defaultGetter[T any]() *c.Getter[T] {
 	return &c.Getter[T]{
 		Configurator: Default,
