@@ -114,6 +114,7 @@ func (g *Getter[T]) TryFrom(src source.StringSource, def ...Defaulter[T]) *Value
 
 		if result.Error != nil {
 			result.Flags.Add(DescFlagTransformError)
+			break
 		}
 	case defaulter != nil:
 		var val T
@@ -139,22 +140,23 @@ func (g *Getter[T]) TryFrom(src source.StringSource, def ...Defaulter[T]) *Value
 
 	ok := false
 	result.Value, ok = state.Value.(T)
-	if ok {
+	if !ok {
+		result.Flags.Add(DescFlagTransformError)
+		result.Error = errors.Join(
+			transform.ErrConversion,
+			fmt.Errorf(
+				"Failed to coerce resulting value %v (%T) to type %T",
+				state.Value,
+				state.Value,
+				result.Value,
+			),
+		)
+
 		g.saveResult(result)
 		return result
 	}
 
-	result.Flags.Add(DescFlagTransformError)
-	result.Error = errors.Join(
-		transform.ErrConversion,
-		fmt.Errorf(
-			"Failed to coerce resulting value %v (%T) to type %T",
-			state.Value,
-			state.Value,
-			result.Value,
-		),
-	)
-
+	g.saveResult(result)
 	return result
 }
 

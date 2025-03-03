@@ -3,11 +3,8 @@ package configurator
 import "github.com/yandzee/config/transform"
 
 type UnpackState struct {
-	Value          any
-	DefaulterError error
-	IsInitialized  bool
-	IsDefaulted    bool
-	IsDefaulterSet bool
+	Value         any
+	IsInitialized bool
 }
 
 func (us *UnpackState) GetValue() (any, error) {
