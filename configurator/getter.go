@@ -16,6 +16,8 @@ type Getter[T any] struct {
 	Defaulter    Defaulter[T]
 }
 
+type Defaulter[T any] func() (T, error)
+
 func (g *Getter[T]) Pre(trs ...transform.Transformer) *Getter[T] {
 	g.Transformers = append(g.Transformers, trs...)
 	return g
@@ -134,7 +136,7 @@ func (g *Getter[T]) TryFrom(src source.StringSource, def ...Defaulter[T]) *Value
 	result.Error = errors.Join(
 		transform.ErrConversion,
 		fmt.Errorf(
-			"Failed to cast resulting value %v (%T) to type %T",
+			"Failed to coerce resulting value %v (%T) to type %T",
 			state.Value,
 			state.Value,
 			result.Value,

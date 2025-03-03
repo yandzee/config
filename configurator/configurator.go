@@ -24,3 +24,7 @@ func (c *Configurator) LogRecords(opts ...LogOption) []slog.Record {
 
 	return recs
 }
+
+func (c *Configurator) Clear() {
+	c.ValueResults = []*ValueResult[any]{}
+}
