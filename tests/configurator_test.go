@@ -97,7 +97,7 @@ func TestConfigurator(t *testing.T) {
 		},
 		{
 			Action: func(cfg *configurator.Configurator) {
-				config.Int(cfg).From(NewStr("4206", nil, true))
+				config.Int(cfg).FromOr(NewStr("4206", nil, true), 4207)
 			},
 			ExpectedResults: []ExpectedResult{
 				{
@@ -247,10 +247,6 @@ func runConfiguratorTests[T any](t *testing.T, tests []ConfiguratorTest[T]) {
 				checkValueResults[T](t, i, &expResult, gotResult)
 			}
 		})
-
-		if idx == 0 {
-			break
-		}
 	}
 }
 

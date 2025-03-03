@@ -114,12 +114,14 @@ func (g *Getter[T]) TryFrom(src source.StringSource, def ...Defaulter[T]) *Value
 			result.Flags.Add(DescFlagTransformError)
 		}
 	case defaulter != nil:
-		result.Value, result.Error = defaulter()
+		var val T
+		val, result.Error = defaulter()
 
 		if result.Error != nil {
 			result.Flags.Add(DescFlagCustomError)
 		} else {
 			result.Flags.Add(DescFlagDefaulted)
+			result.Value = val
 		}
 
 		fallthrough
@@ -128,18 +130,15 @@ func (g *Getter[T]) TryFrom(src source.StringSource, def ...Defaulter[T]) *Value
 		return result
 	}
 
-	g.saveResult(result)
 	if result.Error != nil {
+		g.saveResult(result)
 		return result
 	}
-	//
-	// if !state.IsInitialized && !state.IsDefaulted {
-	// 	return result
-	// }
 
 	ok := false
 	result.Value, ok = state.Value.(T)
 	if ok {
+		g.saveResult(result)
 		return result
 	}
 
