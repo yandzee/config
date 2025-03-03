@@ -219,7 +219,7 @@ func TestConfigurator(t *testing.T) {
 				{
 					Value:    0,
 					Error:    ErrTest1,
-					Flags:    result.FlagCustomError,
+					Flags:    result.FlagDefaulterError,
 					LogLevel: slog.LevelError,
 				},
 			},

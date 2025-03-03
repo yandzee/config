@@ -13,7 +13,7 @@ const (
 	FlagDefaulted
 	FlagCheckFailed
 	FlagTransformError
-	FlagCustomError
+	FlagDefaulterError
 	FlagLookupError
 )
 
@@ -42,8 +42,8 @@ func (rf ResultFlag) IsTransformError() bool {
 	return rf&FlagTransformError != 0
 }
 
-func (rf ResultFlag) IsCustomError() bool {
-	return rf&FlagCustomError != 0
+func (rf ResultFlag) IsDefaulterError() bool {
+	return rf&FlagDefaulterError != 0
 }
 
 func (rf ResultFlag) IsLookupError() bool {
@@ -73,7 +73,7 @@ func (rf ResultFlag) Pairs(all ...bool) []FlagPair {
 		{"is-defaulted", rf.IsDefaulted()},
 		{"is-check-failed", rf.IsCheckFailed()},
 		{"is-transform-error", rf.IsTransformError()},
-		{"is-custom-error", rf.IsCustomError()},
+		{"is-defaulter-error", rf.IsDefaulterError()},
 		{"is-lookup-error", rf.IsLookupError()},
 	}
 

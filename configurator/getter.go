@@ -48,21 +48,21 @@ func (g *Getter[T]) SetConfigurator(cfg *Configurator) *Getter[T] {
 	return g
 }
 
-func (g *Getter[T]) Env(envVar string) T {
+func (g *Getter[T]) Env(envVar string, def ...T) T {
+	fns := make([]Defaulter[T], len(def))
+
+	for idx, defValue := range def {
+		fns[idx] = func() (T, error) {
+			return defValue, nil
+		}
+	}
+
 	return g.From(&source.EnvVarSource{
 		VarName: envVar,
-	})
+	}, fns...)
 }
 
-func (g *Getter[T]) EnvOr(envVar string, def T) T {
-	return g.From(&source.EnvVarSource{
-		VarName: envVar,
-	}, func() (T, error) {
-		return def, nil
-	})
-}
-
-func (g *Getter[T]) EnvOrFn(envVar string, defFn Defaulter[T]) T {
+func (g *Getter[T]) EnvOr(envVar string, defFn Defaulter[T]) T {
 	return g.From(&source.EnvVarSource{
 		VarName: envVar,
 	}, defFn)
@@ -128,7 +128,7 @@ func (g *Getter[T]) TryFrom(src source.StringSource, def ...Defaulter[T]) *resul
 		val, res.Error = defaulter()
 
 		if res.Error != nil {
-			res.Flags.Add(result.FlagCustomError)
+			res.Flags.Add(result.FlagDefaulterError)
 		} else {
 			res.Flags.Add(result.FlagDefaulted)
 			res.Value = val

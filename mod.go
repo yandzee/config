@@ -141,6 +141,10 @@ func Bytes() *c.Getter[[]byte] {
 	return Set[[]byte](nil)
 }
 
+func Custom[T any]() *c.Getter[T] {
+	return Set[T](nil)
+}
+
 func Clear() {
 	Default.Clear()
 }
