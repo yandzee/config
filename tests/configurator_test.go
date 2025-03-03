@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/yandzee/config"
-	"github.com/yandzee/config/checkers"
 	"github.com/yandzee/config/configurator"
 )
 
@@ -33,7 +32,10 @@ func TestConfigurator(t *testing.T) {
 	runConfiguratorTests(t, []ConfiguratorTest[string]{
 		{
 			Action: func(cfg *configurator.Configurator) {
-				config.Int(cfg).From(NewStr("4201", nil, true))
+				config.
+					Int(cfg).
+					Checks().
+					From(NewStr("4201", nil, true))
 			},
 			ExpectedResults: []ExpectedResult{
 				{

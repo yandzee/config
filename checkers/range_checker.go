@@ -2,6 +2,7 @@ package checkers
 
 import (
 	"fmt"
+	"math"
 	"strings"
 )
 
@@ -65,6 +66,10 @@ func (rc *RangeChecker[T]) CheckUint(val uint64, bitSize int8) (bool, string) {
 }
 
 func (rc *RangeChecker[T]) CheckFloat(val float64, bitSize int8) (bool, string) {
+	if math.IsNaN(val) {
+		return false, rc.Description(val)
+	}
+
 	isLeftOk, isRightOk := true, true
 
 	if rc.Left != nil {
