@@ -113,13 +113,13 @@ func (rc *RangeChecker[T]) RangeString() string {
 	}
 
 	if rc.Left != nil {
-		fmt.Fprintf(&sb, "%.4f, ", *rc.Left)
+		fmt.Fprintf(&sb, "%v, ", *rc.Left)
 	} else {
 		fmt.Fprint(&sb, "-Inf, ")
 	}
 
 	if rc.Right != nil {
-		fmt.Fprintf(&sb, "%.4f", *rc.Right)
+		fmt.Fprintf(&sb, "%v", *rc.Right)
 	} else {
 		fmt.Fprint(&sb, "+Inf")
 	}
