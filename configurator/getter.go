@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 
+	"github.com/yandzee/config/check"
 	"github.com/yandzee/config/source"
 	"github.com/yandzee/config/transform"
 )
@@ -13,6 +14,7 @@ type Getter[T any] struct {
 	Target       *T
 	Configurator *Configurator
 	Transformers []transform.Transformer
+	Checkers     []check.Checker[T]
 	Defaulter    Defaulter[T]
 }
 
@@ -154,6 +156,11 @@ func (g *Getter[T]) TryFrom(src source.StringSource, def ...Defaulter[T]) *Value
 	)
 
 	return result
+}
+
+func (g *Getter[T]) Checks(chkrs ...check.Checker[T]) *Getter[T] {
+	g.Checkers = append(g.Checkers, chkrs...)
+	return g
 }
 
 func (g *Getter[T]) saveResult(res *ValueResult[T]) {
