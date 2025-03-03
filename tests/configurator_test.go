@@ -222,6 +222,44 @@ func TestConfigurator(t *testing.T) {
 				},
 			},
 		},
+		{
+			Action: func(cfg *configurator.Configurator) {
+				config.
+					Int().
+					SetConfigurator(cfg).
+					Check(func(v int) (bool, string) {
+						return v != 4215, "Test check"
+					}).
+					From(NewStr("4215", nil, true))
+			},
+			ExpectedResults: []ExpectedResult{
+				{
+					Value:    4215,
+					Error:    configurator.ErrCheck,
+					Flags:    configurator.DescFlagRequired | configurator.DescFlagPresented | configurator.DescFlagCheckFailed,
+					LogLevel: slog.LevelError,
+				},
+			},
+		},
+		{
+			Action: func(cfg *configurator.Configurator) {
+				config.
+					Int().
+					SetConfigurator(cfg).
+					Check(func(v int) (bool, string) {
+						return v == 4216, "Test check"
+					}).
+					From(NewStr("4216", nil, true))
+			},
+			ExpectedResults: []ExpectedResult{
+				{
+					Value:    4216,
+					Error:    nil,
+					Flags:    configurator.DescFlagRequired | configurator.DescFlagPresented,
+					LogLevel: slog.LevelInfo,
+				},
+			},
+		},
 	})
 }
 

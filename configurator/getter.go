@@ -11,6 +11,8 @@ import (
 	"github.com/yandzee/config/transform"
 )
 
+var ErrCheck = errors.New("Check failed")
+
 type Getter[T any] struct {
 	Target       *T
 	Configurator *Configurator
@@ -169,7 +171,10 @@ func (g *Getter[T]) TryFrom(src source.StringSource, def ...Defaulter[T]) *Value
 
 		if !checked {
 			result.Flags.Add(DescFlagCheckFailed)
-			result.Error = fmt.Errorf("%s", desc)
+			result.Error = errors.Join(
+				ErrCheck,
+				fmt.Errorf("%s", desc),
+			)
 
 			break
 		}
