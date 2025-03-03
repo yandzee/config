@@ -1,7 +1,8 @@
 package checkers
 
 import (
-	"github.com/yandzee/config/check"
+	"fmt"
+	"strings"
 )
 
 type RangeChecker[T RealNum] struct {
@@ -11,7 +12,7 @@ type RangeChecker[T RealNum] struct {
 	RightIncluded bool
 }
 
-func (rc *RangeChecker[T]) CheckInt(val int64, bitSize int8) bool {
+func (rc *RangeChecker[T]) CheckInt(val int64, bitSize int8) (bool, string) {
 	isLeftOk, isRightOk := true, true
 
 	if rc.Left != nil {
@@ -34,10 +35,10 @@ func (rc *RangeChecker[T]) CheckInt(val int64, bitSize int8) bool {
 		}
 	}
 
-	return isLeftOk && isRightOk
+	return isLeftOk && isRightOk, rc.Description(val)
 }
 
-func (rc *RangeChecker[T]) CheckUint(val uint64, bitSize int8) bool {
+func (rc *RangeChecker[T]) CheckUint(val uint64, bitSize int8) (bool, string) {
 	isLeftOk, isRightOk := true, true
 
 	if rc.Left != nil {
@@ -60,10 +61,10 @@ func (rc *RangeChecker[T]) CheckUint(val uint64, bitSize int8) bool {
 		}
 	}
 
-	return isLeftOk && isRightOk
+	return isLeftOk && isRightOk, rc.Description(val)
 }
 
-func (rc *RangeChecker[T]) CheckFloat(val float64, bitSize int8) bool {
+func (rc *RangeChecker[T]) CheckFloat(val float64, bitSize int8) (bool, string) {
 	isLeftOk, isRightOk := true, true
 
 	if rc.Left != nil {
@@ -86,16 +87,43 @@ func (rc *RangeChecker[T]) CheckFloat(val float64, bitSize int8) bool {
 		}
 	}
 
-	return isLeftOk && isRightOk
+	return isLeftOk && isRightOk, rc.Description(val)
 }
 
-func IsPositive[T RealNum]() check.Checker[T] {
-	left := float64(0)
+func (rc *RangeChecker[T]) Description(val any) string {
+	return fmt.Sprintf("Value %v is not in the interval %s", val, rc.RangeString())
+}
 
-	return &RealNumCheckerWrapper[T]{
-		Underlying: &RangeChecker[T]{
-			Left:         &left,
-			LeftIncluded: false,
-		},
+func (rc *RangeChecker[T]) RangeString() string {
+	if rc.Left == nil && rc.Right == nil {
+		return "(-Inf, +Inf)"
 	}
+
+	sb := strings.Builder{}
+
+	if rc.LeftIncluded && rc.Left != nil {
+		fmt.Fprintf(&sb, "[")
+	} else {
+		fmt.Fprintf(&sb, "(")
+	}
+
+	if rc.Left != nil {
+		fmt.Fprintf(&sb, "%.4f, ", *rc.Left)
+	} else {
+		fmt.Fprint(&sb, "-Inf, ")
+	}
+
+	if rc.Right != nil {
+		fmt.Fprintf(&sb, "%.4f", *rc.Right)
+	} else {
+		fmt.Fprint(&sb, "+Inf")
+	}
+
+	if rc.RightIncluded && rc.Right != nil {
+		fmt.Fprintf(&sb, "]")
+	} else {
+		fmt.Fprintf(&sb, ")")
+	}
+
+	return sb.String()
 }

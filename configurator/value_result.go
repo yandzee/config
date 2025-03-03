@@ -40,10 +40,6 @@ func (er *ValueResult[T]) LogRecord(withValue bool) slog.Record {
 	return rec
 }
 
-func (er *ValueResult[T]) HasIssues() bool {
-	return er.Error != nil || er.IsRequiredAndNotSet() || er.Flags.IsDefaulted()
-}
-
 func (er *ValueResult[T]) IsRequiredAndNotSet() bool {
 	return er.Flags.IsRequired() && !er.Flags.IsDefaulted() && !er.Flags.IsPresented()
 }

@@ -11,6 +11,7 @@ const (
 	DescFlagRequired DescriptorFlag = 1 << iota
 	DescFlagPresented
 	DescFlagDefaulted
+	DescFlagCheckFailed
 	DescFlagTransformError
 	DescFlagCustomError
 	DescFlagLookupError
@@ -31,6 +32,10 @@ func (df DescriptorFlag) IsPresented() bool {
 
 func (df DescriptorFlag) IsDefaulted() bool {
 	return df&DescFlagDefaulted != 0
+}
+
+func (df DescriptorFlag) IsCheckFailed() bool {
+	return df&DescFlagCheckFailed != 0
 }
 
 func (df DescriptorFlag) IsTransformError() bool {
@@ -66,6 +71,7 @@ func (df DescriptorFlag) Pairs(all ...bool) []DescriptorFlagPair {
 		{"is-required", df.IsRequired()},
 		{"is-presented", df.IsPresented()},
 		{"is-defaulted", df.IsDefaulted()},
+		{"is-check-failed", df.IsCheckFailed()},
 		{"is-transform-error", df.IsTransformError()},
 		{"is-custom-error", df.IsCustomError()},
 		{"is-lookup-error", df.IsLookupError()},

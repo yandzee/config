@@ -1,10 +1,12 @@
 package checkers
 
+import "fmt"
+
 type RealNumCheckerWrapper[T RealNum] struct {
 	Underlying RealNumChecker
 }
 
-func (w *RealNumCheckerWrapper[T]) Check(v T) bool {
+func (w *RealNumCheckerWrapper[T]) Check(v T) (bool, string) {
 	switch val := any(v).(type) {
 	case int:
 		return w.Underlying.CheckInt(int64(val), 0)
@@ -32,5 +34,5 @@ func (w *RealNumCheckerWrapper[T]) Check(v T) bool {
 		return w.Underlying.CheckFloat(val, 64)
 	}
 
-	return false
+	return false, fmt.Sprintf("RealNumCheckerWrapper: unknown value %v (%T)", v, v)
 }

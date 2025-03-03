@@ -33,10 +33,7 @@ func TestConfigurator(t *testing.T) {
 	runConfiguratorTests(t, []ConfiguratorTest[string]{
 		{
 			Action: func(cfg *configurator.Configurator) {
-				config.
-					Int(cfg).
-					Checks(checkers.IsPositive[int]()).
-					From(NewStr("4201", nil, true))
+				config.Int(cfg).From(NewStr("4201", nil, true))
 			},
 			ExpectedResults: []ExpectedResult{
 				{

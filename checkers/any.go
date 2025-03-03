@@ -12,6 +12,6 @@ type AnyChecker[T any] struct {
 	Underlying check.Checker[any]
 }
 
-func (ac *AnyChecker[T]) Check(v T) bool {
+func (ac *AnyChecker[T]) Check(v T) (bool, string) {
 	return ac.Underlying.Check(any(v))
 }

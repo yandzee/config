@@ -17,7 +17,7 @@ type RealNum interface {
 }
 
 type RealNumChecker interface {
-	CheckInt(val int64, bitSize int8) bool
-	CheckUint(val uint64, bitSize int8) bool
-	CheckFloat(val float64, bitSize int8) bool
+	CheckInt(val int64, bitSize int8) (bool, string)
+	CheckUint(val uint64, bitSize int8) (bool, string)
+	CheckFloat(val float64, bitSize int8) (bool, string)
 }

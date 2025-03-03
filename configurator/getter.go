@@ -156,6 +156,19 @@ func (g *Getter[T]) TryFrom(src source.StringSource, def ...Defaulter[T]) *Value
 		return result
 	}
 
+	checked := true
+	for _, checker := range g.Checkers {
+		res, desc := checker.Check(result.Value)
+		checked = checked && res
+
+		if !checked {
+			result.Flags.Add(DescFlagCheckFailed)
+			result.Error = fmt.Errorf("%s", desc)
+
+			break
+		}
+	}
+
 	g.saveResult(result)
 	return result
 }
