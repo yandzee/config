@@ -14,12 +14,14 @@ included.
 import "github.com/yandzee/config"
 
 func main() {
+	cfg := AppConfig{}
+
 	// Return value form
-	c.Port = config.Uint16().Env("PORT", 8080)
+	cfg.Port := config.Uint16().Env("PORT", 8080)
 	// Note that optional second argument is used to specify the default value
 
 	// Generic setter form
-	config.Set(&c.Port).Env("PORT", 8080)
+	config.Set(&cfg.Port).Env("PORT", 8080)
 }
 ```
 
