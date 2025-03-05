@@ -6,15 +6,13 @@ import (
 
 	c "github.com/yandzee/config/configurator"
 	"github.com/yandzee/config/str"
-	"github.com/yandzee/config/transform"
 	"github.com/yandzee/config/transformers"
 )
 
 var Default = &c.Configurator{}
 
 func Set[T any](target *T, opts ...any) *c.Getter[T] {
-	g := defaultGetter[T]()
-	g.Target = target
+	g := defaultGetter[T]().SetTarget(target)
 
 	switch any(target).(type) {
 	case *int:
@@ -155,8 +153,5 @@ func LogRecords(opts ...c.LogOption) []slog.Record {
 }
 
 func defaultGetter[T any]() *c.Getter[T] {
-	return &c.Getter[T]{
-		Configurator: Default,
-		Transformers: []transform.Transformer{},
-	}
+	return new(c.Getter[T]).SetConfigurator(Default)
 }

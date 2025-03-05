@@ -13,22 +13,22 @@ import (
 )
 
 type Getter[T any] struct {
-	Target       *T
-	Configurator *Configurator
-	Transformers []transform.Transformer
-	Checkers     []check.Checker[T]
-	Defaulter    Defaulter[T]
+	target       *T
+	configurator *Configurator
+	transformers []transform.Transformer
+	checkers     []check.Checker[T]
+	defaulter    Defaulter[T]
 }
 
 type Defaulter[T any] func() (T, error)
 
 func (g *Getter[T]) Pre(trs ...transform.Transformer) *Getter[T] {
-	g.Transformers = append(trs, g.Transformers...)
+	g.transformers = append(trs, g.transformers...)
 	return g
 }
 
 func (g *Getter[T]) Post(trs ...transform.Transformer) *Getter[T] {
-	g.Transformers = append(g.Transformers, trs...)
+	g.transformers = append(g.transformers, trs...)
 	return g
 }
 
@@ -39,12 +39,17 @@ func (g *Getter[T]) Default(def T) *Getter[T] {
 }
 
 func (g *Getter[T]) DefaultFn(fn Defaulter[T]) *Getter[T] {
-	g.Defaulter = fn
+	g.defaulter = fn
 	return g
 }
 
 func (g *Getter[T]) SetConfigurator(cfg *Configurator) *Getter[T] {
-	g.Configurator = cfg
+	g.configurator = cfg
+	return g
+}
+
+func (g *Getter[T]) SetTarget(t *T) *Getter[T] {
+	g.target = t
 	return g
 }
 
@@ -77,7 +82,7 @@ func (g *Getter[T]) FromOr(src source.StringSource, def T) T {
 func (g *Getter[T]) From(src source.StringSource, def ...Defaulter[T]) T {
 	result := g.TryFrom(src, def...)
 
-	if g.Configurator == nil {
+	if g.configurator == nil {
 		lvl, msg := result.LevelAndMessage()
 
 		if lvl == slog.LevelError {
@@ -117,7 +122,7 @@ func (g *Getter[T]) TryFrom(src source.StringSource, def ...Defaulter[T]) *resul
 		res.Flags.Add(result.FlagPresented)
 
 		state.Value = str
-		res.Error = transform.Run(state, g.Transformers)
+		res.Error = transform.Run(state, g.transformers)
 
 		if res.Error != nil {
 			res.Flags.Add(result.FlagTransformError)
@@ -158,7 +163,7 @@ func (g *Getter[T]) TryFrom(src source.StringSource, def ...Defaulter[T]) *resul
 		}
 	}
 
-	for _, checker := range g.Checkers {
+	for _, checker := range g.checkers {
 		ok, desc := checker.Check(res)
 
 		if !ok {
@@ -174,28 +179,28 @@ func (g *Getter[T]) TryFrom(src source.StringSource, def ...Defaulter[T]) *resul
 }
 
 func (g *Getter[T]) Checks(chkrs ...check.Checker[T]) *Getter[T] {
-	g.Checkers = append(g.Checkers, chkrs...)
+	g.checkers = append(g.checkers, chkrs...)
 	return g
 }
 
 func (g *Getter[T]) Check(fn func(*result.Result[T]) (bool, string)) *Getter[T] {
-	g.Checkers = append(g.Checkers, checkers.Fn(fn))
+	g.checkers = append(g.checkers, checkers.Fn(fn))
 	return g
 }
 
 func (g *Getter[T]) saveResult(res *result.Result[T]) {
-	if g.Configurator != nil {
-		g.Configurator.Results = append(g.Configurator.Results, res.Any())
+	if g.configurator != nil {
+		g.configurator.Results = append(g.configurator.Results, res.Any())
 	}
 
-	if g.Target != nil {
-		*g.Target = res.Value
+	if g.target != nil {
+		*g.target = res.Value
 	}
 }
 
 func (g *Getter[T]) getDefaulter(def ...Defaulter[T]) Defaulter[T] {
-	if g.Defaulter != nil {
-		return g.Defaulter
+	if g.defaulter != nil {
+		return g.defaulter
 	}
 
 	for _, defFn := range def {
