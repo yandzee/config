@@ -48,7 +48,7 @@ func Set[T any](target *T, opts ...any) *c.Getter[T] {
 	case *bool:
 		g.Post(transformers.Parse(str.DefaultParser.Bool))
 	case *[]string:
-		seps := transformers.CoerceOptions[string](opts)
+		seps := transformers.CoerceOptions[any, string](opts)
 		g.Post(transformers.Split(seps...))
 	case *time.Duration:
 		g.Post(transformers.Parse(str.DefaultParser.Duration))
@@ -133,8 +133,9 @@ func String() *c.Getter[string] {
 	return Set[string](nil)
 }
 
-func Strings(seps ...any) *c.Getter[[]string] {
-	return Set[[]string](nil, seps...)
+func Strings(seps ...string) *c.Getter[[]string] {
+	opts := transformers.CoerceOptions[string, any](seps)
+	return Set[[]string](nil, opts...)
 }
 
 func Bytes() *c.Getter[[]byte] {
