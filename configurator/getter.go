@@ -108,21 +108,18 @@ func (g *Getter[T]) TryFrom(src source.StringSource, def ...Defaulter[T]) *resul
 		return res
 	}
 
-	state := &UnpackState{
-		IsInitialized: presented,
-	}
-
 	defaulter := g.getDefaulter(def...)
 	if defaulter == nil {
 		res.Flags.Add(result.FlagRequired)
 	}
 
+	var transformed any
+
 	switch {
 	case presented:
 		res.Flags.Add(result.FlagPresented)
 
-		state.Value = str
-		res.Error = transform.Run(state, g.transformers)
+		transformed, res.Error = transform.Run(str, g.transformers)
 
 		if res.Error != nil {
 			res.Flags.Add(result.FlagTransformError)
@@ -145,9 +142,9 @@ func (g *Getter[T]) TryFrom(src source.StringSource, def ...Defaulter[T]) *resul
 		return res
 	}
 
-	if state.IsInitialized {
+	if presented {
 		ok := false
-		res.Value, ok = state.Value.(T)
+		res.Value, ok = transformed.(T)
 
 		if !ok {
 			res.Flags.Add(result.FlagTransformError)
@@ -155,8 +152,8 @@ func (g *Getter[T]) TryFrom(src source.StringSource, def ...Defaulter[T]) *resul
 				transform.ErrConversion,
 				fmt.Errorf(
 					"Failed to coerce resulting value %v (%T) to type %T",
-					state.Value,
-					state.Value,
+					transformed,
+					transformed,
 					res.Value,
 				),
 			)

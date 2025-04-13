@@ -6,70 +6,51 @@ import (
 )
 
 var (
-	ErrTransform  = errors.New("Failed to transform data")
 	ErrConversion = errors.New("Failed to convert value type")
-
-	ErrNoValue = errors.New("Transformable state has no value")
 )
-
-type State interface {
-	GetValue() (any, error)
-	SetValue(any) error
-}
 
 type Transformer interface {
 	Chain(Transformer) Transformer
-	Transform(State) error
+	Transform(any) (any, error)
 }
 
-type StateFn = func(State) error
-// type MapFromToFn[F, T any] func(F) (T, error)
+type ValueTransformerFn func(any) (any, error)
 
 func Map[F, T any](fn func(F) (T, error)) Transformer {
-	return StateTransform(func(state State) error {
-		stateValue, err := state.GetValue()
-
-		switch {
-		case errors.Is(err, ErrNoValue):
-			return nil
-		case err != nil:
-			return err
-		}
-
-		value, ok := stateValue.(F)
+	return ValueTransformer(func(val any) (any, error) {
+		coerced, ok := val.(F)
 		if !ok {
-			return errors.Join(
+			return nil, errors.Join(
 				ErrConversion,
 				fmt.Errorf(
 					"Failed to cast state value `%v` of type %T to type %T",
-					stateValue,
-					stateValue,
-					value,
+					val,
+					val,
+					coerced,
 				),
 			)
 		}
 
-		newValue, err := fn(value)
-		if err != nil {
-			return err
-		}
-
-		return state.SetValue(newValue)
+		return fn(coerced)
 	})
 }
 
-func StateTransform(fn StateFn) Transformer {
-	return &StateTransformer{
+func ValueTransformer(fn ValueTransformerFn) Transformer {
+	return &FnTransformer{
 		Fn: fn,
 	}
 }
 
-func Run(state State, trs []Transformer) error {
+func Run(val any, trs []Transformer) (any, error) {
+	var err error
+
 	for _, tr := range trs {
-		if err := tr.Transform(state); err != nil {
-			return err
+		val, err = tr.Transform(val)
+
+		if err != nil {
+			return nil, err
 		}
 	}
 
-	return nil
+	return val, nil
 }

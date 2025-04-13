@@ -1,21 +1,22 @@
 package transform
 
-type StateTransformer struct {
-	Fn StateFn
+type FnTransformer struct {
+	Fn ValueTransformerFn
 }
 
-func (st *StateTransformer) Chain(t Transformer) Transformer {
-	return &StateTransformer{
-		Fn: func(state State) error {
-			if err := st.Transform(state); err != nil {
-				return err
+func (ft *FnTransformer) Chain(rhs Transformer) Transformer {
+	return &FnTransformer{
+		Fn: func(val any) (any, error) {
+			transformed, err := ft.Transform(val)
+			if err != nil {
+				return nil, err
 			}
 
-			return t.Transform(state)
+			return rhs.Transform(transformed)
 		},
 	}
 }
 
-func (st *StateTransformer) Transform(state State) error {
-	return st.Fn(state)
+func (st *FnTransformer) Transform(val any) (any, error) {
+	return st.Fn(val)
 }
