@@ -151,7 +151,7 @@ func (g *Getter[T]) TryFrom(src source.StringSource, def ...Defaulter[T]) *resul
 			res.Error = errors.Join(
 				transform.ErrConversion,
 				fmt.Errorf(
-					"Failed to coerce resulting value %v (%T) to type %T",
+					"failed to coerce resulting value %v (%T) to type %T",
 					transformed,
 					transformed,
 					res.Value,

@@ -1,6 +1,7 @@
 package result
 
 import (
+	"fmt"
 	"log/slog"
 	"time"
 
@@ -45,15 +46,17 @@ func (er *Result[T]) IsRequiredAndNotSet() bool {
 }
 
 func (er *Result[T]) LevelAndMessage() (slog.Level, string) {
+	prefix := fmt.Sprintf("%s:%s", er.Source.Kind(), er.Source.Name())
+
 	switch {
 	case er.Error != nil:
 		return slog.LevelError, er.Error.Error()
 	case er.IsRequiredAndNotSet():
-		return slog.LevelError, "Not set"
+		return slog.LevelError, fmt.Sprintf("%s is not set", prefix)
 	case er.Flags.IsDefaulted():
-		return slog.LevelWarn, "Value set"
+		return slog.LevelWarn, fmt.Sprintf("%s is set", prefix)
 	default:
-		return slog.LevelInfo, "Value set"
+		return slog.LevelInfo, fmt.Sprintf("%s is set", prefix)
 	}
 }
 
