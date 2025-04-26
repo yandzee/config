@@ -30,7 +30,7 @@ func Set[T any](target *T, opts ...any) *c.Getter[T] {
 	case *uint8:
 		g.Post(transformers.Parse(str.DefaultParser.Uint8))
 	case *uint16:
-		g.Post(transformers.Parse(str.DefaultParser.Uint64))
+		g.Post(transformers.Parse(str.DefaultParser.Uint16))
 	case *uint32:
 		g.Post(transformers.Parse(str.DefaultParser.Uint32))
 	case *uint64:
