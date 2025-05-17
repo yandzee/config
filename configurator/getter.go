@@ -160,14 +160,16 @@ func (g *Getter[T]) TryFrom(src source.StringSource, def ...Defaulter[T]) *resul
 		}
 	}
 
-	for _, checker := range g.checkers {
-		ok, desc := checker.Check(res)
+	if presented || defaulter != nil {
+		for _, checker := range g.checkers {
+			ok, desc := checker.Check(res)
 
-		if !ok {
-			res.Flags.Add(result.FlagCheckFailed)
-			res.Error = fmt.Errorf("%s", desc)
+			if !ok {
+				res.Flags.Add(result.FlagCheckFailed)
+				res.Error = fmt.Errorf("%s", desc)
 
-			break
+				break
+			}
 		}
 	}
 
