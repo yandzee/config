@@ -14,10 +14,10 @@ type Transformer interface {
 	Transform(any) (any, error)
 }
 
-type ValueTransformerFn func(any) (any, error)
+type AnyToAnyFn func(any) (any, error)
 
 func Map[F, T any](fn func(F) (T, error)) Transformer {
-	return ValueTransformer(func(val any) (any, error) {
+	return AnyToAny(func(val any) (any, error) {
 		coerced, ok := val.(F)
 		if !ok {
 			return nil, errors.Join(
@@ -35,7 +35,7 @@ func Map[F, T any](fn func(F) (T, error)) Transformer {
 	})
 }
 
-func ValueTransformer(fn ValueTransformerFn) Transformer {
+func AnyToAny(fn AnyToAnyFn) Transformer {
 	return &FnTransformer{
 		Fn: fn,
 	}

@@ -1,7 +1,7 @@
 package transform
 
 type FnTransformer struct {
-	Fn ValueTransformerFn
+	Fn AnyToAnyFn
 }
 
 func (ft *FnTransformer) Chain(rhs Transformer) Transformer {

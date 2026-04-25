@@ -1,15 +1,19 @@
 package config
 
 import (
+	"encoding/json"
 	"log/slog"
 	"time"
 
 	c "github.com/yandzee/config/configurator"
 	"github.com/yandzee/config/str"
+	"github.com/yandzee/config/transform"
 	"github.com/yandzee/config/transformers"
 )
 
 var Default = &c.Configurator{}
+
+type jsonType struct{}
 
 func Set[T any](target *T, opts ...any) *c.Getter[T] {
 	g := defaultGetter[T]().SetTarget(target)
@@ -54,6 +58,15 @@ func Set[T any](target *T, opts ...any) *c.Getter[T] {
 		g.Post(transformers.Parse(str.DefaultParser.SlogLevel))
 	case *[]byte:
 		g.Post(transformers.ToBytes)
+	case *jsonType:
+		toJson := transformers.ToBytes.Chain(
+			transform.Map(func(jsonBytes []byte) (*T, error) {
+				parsed := new(T)
+				return parsed, json.Unmarshal(jsonBytes, parsed)
+			}),
+		)
+
+		g.Post(toJson)
 	}
 
 	return g
@@ -138,6 +151,10 @@ func Strings(seps ...string) *c.Getter[[]string] {
 
 func Bytes() *c.Getter[[]byte] {
 	return Set[[]byte](nil)
+}
+
+func JSON() *c.Getter[jsonType] {
+	return Set[jsonType](nil)
 }
 
 func Custom[T any]() *c.Getter[T] {
