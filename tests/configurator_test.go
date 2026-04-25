@@ -17,6 +17,15 @@ var (
 	ErrTest2 = errors.New("ErrTest2")
 )
 
+type TestNested struct {
+	Value int `json:"value"`
+}
+
+type TestStruct struct {
+	Str    string     `json:"str"`
+	Nested TestNested `json:"nested"`
+}
+
 type ConfiguratorTest[T any] struct {
 	Action          func(*configurator.Configurator)
 	ExpectedResults []ExpectedResult
@@ -264,6 +273,48 @@ func TestConfigurator(t *testing.T) {
 				},
 			},
 		},
+		{
+			Action: func(cfg *configurator.Configurator) {
+				config.
+					JSON[TestStruct]().
+					SetConfigurator(cfg).
+					From(NewStr(`{"str":"test","nested":{"value":42}}`, nil, true))
+			},
+			ExpectedResults: []ExpectedResult{
+				{
+					Value: TestStruct{
+						Str: "test",
+						Nested: TestNested{
+							Value: 42,
+						},
+					},
+					Error:    nil,
+					Flags:    result.FlagRequired | result.FlagPresented,
+					LogLevel: slog.LevelInfo,
+				},
+			},
+		},
+		{
+			Action: func(cfg *configurator.Configurator) {
+				config.
+					JSON[TestStruct]().
+					SetConfigurator(cfg).
+					From(NewStr(`{"str":"test"}`, nil, true))
+			},
+			ExpectedResults: []ExpectedResult{
+				{
+					Value: TestStruct{
+						Str: "test",
+						Nested: TestNested{
+							Value: 0,
+						},
+					},
+					Error:    nil,
+					Flags:    result.FlagRequired | result.FlagPresented,
+					LogLevel: slog.LevelInfo,
+				},
+			},
+		},
 	})
 }
 
@@ -307,9 +358,9 @@ func checkValueResults[T any](
 			"Result %d: flags are not equal, exp: %s (%v), got: %s (%v), err: %v\n",
 			idx,
 			exp.Flags,
-			exp.Flags.Pairs(),
+			exp.Flags.StringEnabled(),
 			got.Flags,
-			got.Flags.Pairs(),
+			got.Flags.StringEnabled(),
 			got.Error,
 		)
 	}

@@ -1,11 +1,13 @@
 package config
 
 import (
+	"encoding/json"
 	"log/slog"
 	"time"
 
 	c "github.com/yandzee/config/configurator"
 	"github.com/yandzee/config/str"
+	"github.com/yandzee/config/transform"
 	"github.com/yandzee/config/transformers"
 )
 
@@ -138,6 +140,17 @@ func Strings(seps ...string) *c.Getter[[]string] {
 
 func Bytes() *c.Getter[[]byte] {
 	return Set[[]byte](nil)
+}
+
+func JSON[T any]() *c.Getter[T] {
+	toJson := transformers.ToBytes.Chain(
+		transform.Map(func(jsonBytes []byte) (T, error) {
+			var parsed T
+			return parsed, json.Unmarshal(jsonBytes, &parsed)
+		}),
+	)
+
+	return defaultGetter[T]().Post(toJson)
 }
 
 func Custom[T any]() *c.Getter[T] {
