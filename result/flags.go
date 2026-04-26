@@ -1,8 +1,10 @@
 package result
 
 import (
+	"fmt"
 	"log/slog"
 	"strconv"
+	"strings"
 )
 
 type ResultFlag uint8
@@ -92,7 +94,20 @@ func (rf ResultFlag) Pairs(all ...bool) []FlagPair {
 	}
 
 	return filtered
+}
 
+func (rf ResultFlag) StringEnabled() string {
+	sb := strings.Builder{}
+
+	for i, pair := range rf.Pairs() {
+		if i != 0 {
+			fmt.Fprint(&sb, ", ")
+		}
+
+		fmt.Fprintf(&sb, "%s", pair.Name)
+	}
+
+	return sb.String()
 }
 
 func (rf ResultFlag) LogAttrs() []any {
